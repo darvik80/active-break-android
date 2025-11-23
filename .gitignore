@@ -33,6 +33,7 @@ google-services.json
 # Gradle
 .gradle/
 build/
+release
 
 # Local configuration file (sdk.dir, etc.)
 local.properties
