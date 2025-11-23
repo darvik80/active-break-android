@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import xyz.crearts.activebreak.data.local.AppDatabase
 import xyz.crearts.activebreak.data.local.entity.TodoTask
 import xyz.crearts.activebreak.data.repository.TodoTaskRepository
+import java.util.Calendar
 
 class TodoViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)
@@ -34,26 +35,40 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
         category: String
     ) {
         viewModelScope.launch {
+            val finalDueDate = dueDate?.let { date ->
+                val calendar = Calendar.getInstance()
+                calendar.timeInMillis = date
+                calendar.set(Calendar.HOUR_OF_DAY, hour)
+                calendar.set(Calendar.MINUTE, minute)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                calendar.timeInMillis
+            }
+
             val task = TodoTask(
                 title = title,
                 description = description,
-                dueDate = dueDate,
+                dueDate = finalDueDate,
                 category = category,
                 recurrenceType = recurrenceType,
                 recurrenceDays = recurrenceDays,
                 reminderEnabled = reminderEnabled,
                 reminderMinutesBefore = reminderMinutesBefore,
-                nextDueDate = dueDate
+                nextDueDate = finalDueDate
             )
 
             val taskId = repository.insert(task)
 
             // Запланировать напоминание если включено
-            if (reminderEnabled && dueDate != null) {
-                xyz.crearts.activebreak.workers.TodoReminderWorker.scheduleTodoReminder(
-                    getApplication(),
-                    task.copy(id = taskId)
-                )
+            if (reminderEnabled && finalDueDate != null) {
+                // Рассчитываем время напоминания
+                val reminderTime = finalDueDate - (reminderMinutesBefore * 60 * 1000)
+                if (reminderTime > System.currentTimeMillis()) {
+                    xyz.crearts.activebreak.workers.TodoReminderWorker.scheduleTodoReminder(
+                        getApplication(),
+                        task.copy(id = taskId)
+                    )
+                }
             }
         }
     }

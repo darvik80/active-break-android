@@ -297,7 +297,7 @@ fun TodoScreen(
     }
 
     if (showAddDialog) {
-        AddTaskDialog(
+        AddOrEditTaskDialog(
             onDismiss = { showAddDialog = false },
             onAdd = { title, description, dueDate, hour, minute, recurrence, days, reminderEnabled, reminderMinutes, category ->
                 viewModel.addTask(
@@ -319,13 +319,25 @@ fun TodoScreen(
     }
 
     editingTask?.let { task ->
-        AddTaskDialog(
+        AddOrEditTaskDialog(
             onDismiss = { editingTask = null },
             onAdd = { title, description, dueDate, hour, minute, recurrence, days, reminderEnabled, reminderMinutes, category ->
+                // Combine date and time here because updateTask expects a full timestamp
+                val finalDueDate = dueDate?.let { date ->
+                    val calendar = java.util.Calendar.getInstance()
+                    calendar.timeInMillis = date
+                    calendar.set(java.util.Calendar.HOUR_OF_DAY, hour)
+                    calendar.set(java.util.Calendar.MINUTE, minute)
+                    calendar.set(java.util.Calendar.SECOND, 0)
+                    calendar.set(java.util.Calendar.MILLISECOND, 0)
+                    calendar.timeInMillis
+                }
+
                 viewModel.updateTask(task.copy(
                     title = title,
                     description = description,
-                    dueDate = dueDate,
+                    dueDate = finalDueDate,
+                    nextDueDate = finalDueDate, // Reset next due date on edit
                     category = category,
                     recurrenceType = recurrence,
                     recurrenceDays = days,
@@ -517,7 +529,7 @@ fun CompactTodoTaskCard(
 }
 
 @Composable
-fun AddTaskDialog(
+fun AddOrEditTaskDialog(
     onDismiss: () -> Unit,
     onAdd: (String, String?, Long?, Int, Int, String, String?, Boolean, Int, String) -> Unit,
     existingTask: TodoTask? = null

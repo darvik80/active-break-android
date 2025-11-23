@@ -21,10 +21,13 @@ class TodoReminderWorker(
             val database = xyz.crearts.activebreak.data.local.AppDatabase.getDatabase(applicationContext)
             val task = database.todoTaskDao().getTaskById(taskId) ?: return Result.failure()
 
-            if (task.isCompleted) return Result.success()
+            if (task.isCompleted || task.isPaused) return Result.success()
 
             // Получаем настройки
             val settings = SettingsManager.instance.getSettings().first()
+
+            // Если уведомления о задачах отключены, ничего не делаем
+            if (!settings.todoNotificationsEnabled) return Result.success()
 
             // Показываем уведомление
             NotificationHelper.showTodoNotification(applicationContext, task)
@@ -43,6 +46,9 @@ class TodoReminderWorker(
                 )
             }
 
+            // Если задача периодическая, нужно запланировать следующий запуск
+            // (Эта логика может быть здесь или при отметке выполнения, но напоминание срабатывает 1 раз для текущего nextDueDate)
+
             Result.success()
         } catch (e: Exception) {
             Log.e("TodoReminderWorker", "Error: ${e.message}", e)
@@ -54,15 +60,37 @@ class TodoReminderWorker(
         private const val KEY_TASK_ID = "task_id"
 
         fun scheduleTodoReminder(context: Context, task: TodoTask) {
+            // Отменяем предыдущие напоминания для этой задачи, чтобы не дублировать
+            // WorkManager.getInstance(context).cancelAllWorkByTag("todo_${task.id}") 
+            // (но мы используем OneTimeWork, так что это не критично, если id уникален, но лучше добавить tag)
+
             val inputData = workDataOf(KEY_TASK_ID to task.id)
             
-            // Если у задачи есть deadline, можно использовать его для точного времени,
-            // но пока просто запускаем сейчас (или можно добавить delay)
+            val dueDate = task.nextDueDate ?: task.dueDate ?: return
+            val reminderTime = dueDate - (task.reminderMinutesBefore * 60 * 1000)
+            val delay = reminderTime - System.currentTimeMillis()
+
+            if (delay < 0) {
+                // Время напоминания уже прошло
+                // Можно запустить сразу, если оно было недавно, или пропустить
+                return 
+            }
+
             val workRequest = OneTimeWorkRequestBuilder<TodoReminderWorker>()
                 .setInputData(inputData)
+                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                .addTag("todo_${task.id}")
                 .build()
 
-            WorkManager.getInstance(context).enqueue(workRequest)
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                "todo_reminder_${task.id}",
+                ExistingWorkPolicy.REPLACE,
+                workRequest
+            )
+        }
+        
+        fun cancelTodoReminder(context: Context, taskId: Long) {
+            WorkManager.getInstance(context).cancelUniqueWork("todo_reminder_$taskId")
         }
     }
 }
