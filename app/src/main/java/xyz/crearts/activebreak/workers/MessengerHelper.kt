@@ -1,0 +1,105 @@
+package xyz.crearts.activebreak.workers
+
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
+
+object MessengerHelper {
+
+    /**
+     * Отправка сообщения в Telegram через Bot API
+     */
+    suspend fun sendToTelegram(
+        botToken: String,
+        chatId: String,
+        message: String
+    ): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val urlString = "https://api.telegram.org/bot$botToken/sendMessage"
+            val url = URL(urlString)
+            val connection = url.openConnection() as HttpURLConnection
+
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.doOutput = true
+
+            // Экранируем специальные символы для JSON
+            val safeMessage = message.replace("\"", "\\\"").replace("\n", "\\n")
+
+            val jsonPayload = """
+                {
+                    "chat_id": "$chatId",
+                    "text": "$safeMessage",
+                    "parse_mode": "HTML"
+                }
+            """.trimIndent()
+
+            connection.outputStream.use { os ->
+                val input = jsonPayload.toByteArray(Charsets.UTF_8)
+                os.write(input, 0, input.size)
+            }
+
+            val responseCode = connection.responseCode
+            Log.d("MessengerHelper", "Telegram response code: $responseCode")
+
+            if (responseCode != 200) {
+                val errorStream = connection.errorStream?.bufferedReader()?.use { it.readText() }
+                Log.e("MessengerHelper", "Telegram error: $errorStream")
+            }
+
+            responseCode == 200
+        } catch (e: Exception) {
+            Log.e("MessengerHelper", "Error sending to Telegram: ${e.message}", e)
+            false
+        }
+    }
+
+    /**
+     * Отправка сообщения в WhatsApp через Intent
+     */
+    fun sendToWhatsApp(context: Context, phoneNumber: String, message: String) {
+        try {
+            val url = "https://api.whatsapp.com/send?phone=$phoneNumber&text=${Uri.encode(message)}"
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                data = Uri.parse(url)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MessengerHelper", "Error sending to WhatsApp: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Форматирование сообщения для уведомления о перерыве
+     */
+    fun formatBreakMessage(activityTitle: String, activityDescription: String?): String {
+        return buildString {
+            append("⏰ <b>Время для перерыва!</b>\n\n")
+            append("📋 $activityTitle\n")
+            if (!activityDescription.isNullOrBlank()) {
+                append("\n$activityDescription")
+            }
+            append("\n\n💪 Заботься о своём здоровье!")
+        }
+    }
+
+    /**
+     * Форматирование сообщения для уведомления о задаче
+     */
+    fun formatTodoMessage(taskTitle: String, taskDescription: String?): String {
+        return buildString {
+            append("✅ <b>Напоминание о задаче!</b>\n\n")
+            append("📌 $taskTitle\n")
+            if (!taskDescription.isNullOrBlank()) {
+                append("\n$taskDescription")
+            }
+            append("\n\n🎯 Не забудь выполнить!")
+        }
+    }
+}
