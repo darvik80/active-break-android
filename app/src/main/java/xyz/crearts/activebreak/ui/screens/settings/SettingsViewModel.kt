@@ -83,6 +83,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             val todoDao = database.todoTaskDao()
             val tasks = todoDao.getAllTasks().first()
 
+            // TODO: логика выбора задачи странная - и не оптимальная
             tasks.firstOrNull()?.let { task ->
                 xyz.crearts.activebreak.workers.TodoReminderWorker.scheduleTodoReminder(
                     getApplication(),
