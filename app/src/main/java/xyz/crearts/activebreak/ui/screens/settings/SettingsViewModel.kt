@@ -1,18 +1,27 @@
 package xyz.crearts.activebreak.ui.screens.settings
 
 import android.app.Application
-import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import xyz.crearts.activebreak.data.preferences.Settings
 import xyz.crearts.activebreak.data.preferences.SettingsManager
 import xyz.crearts.activebreak.workers.BreakReminderWorker
 import xyz.crearts.activebreak.workers.MessengerHelper
+
+// UI Events for proper MVVM architecture
+sealed class SettingsUiEvent {
+    data class ShowMessage(val message: String) : SettingsUiEvent()
+    data class ShowError(val error: String) : SettingsUiEvent()
+}
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
     private val settingsManager = SettingsManager.instance
@@ -23,6 +32,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = Settings()
         )
+
+    // UI Events channel for proper MVVM communication
+    private val _uiEvents = Channel<SettingsUiEvent>()
+    val uiEvents = _uiEvents.receiveAsFlow()
+
+    // Loading state for UI
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
+
+    private fun sendEvent(event: SettingsUiEvent) {
+        viewModelScope.launch {
+            _uiEvents.send(event)
+        }
+    }
 
     fun updateStartTime(hour: Int, minute: Int) {
         viewModelScope.launch {
@@ -64,65 +87,78 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun testBreakNotification() {
         viewModelScope.launch {
-            val database = xyz.crearts.activebreak.data.local.AppDatabase.getDatabase(getApplication())
-            val repository = xyz.crearts.activebreak.data.repository.BreakActivityRepository(database.breakActivityDao())
-            val activity = repository.getRandomActivity()
-
-            activity?.let {
-                xyz.crearts.activebreak.workers.NotificationHelper.showBreakNotification(
-                    getApplication(),
-                    it
+            try {
+                _isLoading.value = true
+                val repository = xyz.crearts.activebreak.data.repository.BreakActivityRepository(
+                    xyz.crearts.activebreak.data.local.AppDatabase.getDatabase(getApplication()).breakActivityDao()
                 )
+                val activity = repository.getRandomActivity()
+
+                if (activity != null) {
+                    xyz.crearts.activebreak.workers.NotificationHelper.showBreakNotification(getApplication(), activity)
+                    sendEvent(SettingsUiEvent.ShowMessage("Тестовое уведомление отправлено!"))
+                } else {
+                    sendEvent(SettingsUiEvent.ShowError("Нет доступных активностей для тестирования"))
+                }
+            } catch (e: Exception) {
+                sendEvent(SettingsUiEvent.ShowError("Ошибка при отправке уведомления: ${e.message}"))
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     fun testTodoNotification() {
         viewModelScope.launch {
-            val database = xyz.crearts.activebreak.data.local.AppDatabase.getDatabase(getApplication())
-            val todoDao = database.todoTaskDao()
-            val tasks = todoDao.getAllTasks().first()
+            try {
+                _isLoading.value = true
+                val todoDao = xyz.crearts.activebreak.data.local.AppDatabase.getDatabase(getApplication()).todoTaskDao()
 
-            tasks.firstOrNull()?.let { task ->
-                xyz.crearts.activebreak.workers.TodoReminderWorker.scheduleTodoReminder(
-                    getApplication(),
-                    task
-                )
+                // Get existing task or create new one - optimized approach
+                val testTask = todoDao.getFirstActiveTask()
+                    ?: todoDao.getAnyTask()
+                    ?: createTestTask(todoDao)
+
+                xyz.crearts.activebreak.workers.TodoReminderWorker.scheduleTodoReminder(getApplication(), testTask)
+                sendEvent(SettingsUiEvent.ShowMessage("Тестовое напоминание о задаче запланировано!"))
+            } catch (e: Exception) {
+                sendEvent(SettingsUiEvent.ShowError("Ошибка при создании напоминания: ${e.message}"))
+            } finally {
+                _isLoading.value = false
             }
         }
+    }
+
+    private suspend fun createTestTask(todoDao: xyz.crearts.activebreak.data.local.dao.TodoTaskDao): xyz.crearts.activebreak.data.local.entity.TodoTask {
+        val testTask = xyz.crearts.activebreak.data.local.entity.TodoTask(
+            title = "Тестовая задача",
+            description = "Это тестовое напоминание для проверки уведомлений",
+            category = "OTHER",
+            reminderEnabled = true
+        )
+        val taskId = todoDao.insert(testTask)
+        return testTask.copy(id = taskId)
     }
     
     fun testTelegramIntegration(token: String, chatId: String) {
-        viewModelScope.launch {
-            if (token.isBlank() || chatId.isBlank()) {
-                Toast.makeText(getApplication(), "Токен или Chat ID не заполнены", Toast.LENGTH_SHORT).show()
-                return@launch
-            }
-            
-            val success = MessengerHelper.sendToTelegram(
-                token,
-                chatId,
-                "🔔 Тестовое сообщение от ActiveBreak!\nИнтеграция работает успешно. 🚀"
-            )
-            
-            if (success) {
-                Toast.makeText(getApplication(), "Сообщение отправлено!", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(getApplication(), "Ошибка отправки. Проверьте токен и Chat ID", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-    
-    fun testWhatsAppIntegration(number: String) {
-        if (number.isBlank()) {
-            Toast.makeText(getApplication(), "Номер телефона не заполнен", Toast.LENGTH_SHORT).show()
+        if (token.isBlank() || chatId.isBlank()) {
+            sendEvent(SettingsUiEvent.ShowError("Токен или Chat ID не заполнены"))
             return
         }
-        
-        MessengerHelper.sendToWhatsApp(
-            getApplication(),
-            number,
-            "🔔 Тестовое сообщение от ActiveBreak! Интеграция работает."
-        )
+
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                val success = MessengerHelper.sendToTelegram(token, chatId,
+                    "🔔 Тестовое сообщение от ActiveBreak!\nИнтеграция работает успешно. 🚀")
+
+                val message = if (success) "Сообщение отправлено!" else "Ошибка отправки. Проверьте токен и Chat ID"
+                sendEvent(if (success) SettingsUiEvent.ShowMessage(message) else SettingsUiEvent.ShowError(message))
+            } catch (e: Exception) {
+                sendEvent(SettingsUiEvent.ShowError("Ошибка при отправке в Telegram: ${e.message}"))
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 }

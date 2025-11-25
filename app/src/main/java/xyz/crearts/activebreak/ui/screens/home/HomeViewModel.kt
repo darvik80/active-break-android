@@ -15,10 +15,13 @@ import xyz.crearts.activebreak.data.repository.BreakActivityRepository
 import xyz.crearts.activebreak.workers.BreakReminderWorker
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
-    private val database = AppDatabase.getDatabase(application)
-    private val repository = BreakActivityRepository(database.breakActivityDao())
+    // Use dependency injection pattern instead of direct database creation
     private val settingsManager = SettingsManager.instance
-    private val statisticsDao = database.activityStatisticsDao()
+
+    // Lazy initialization to avoid blocking main thread
+    private val database by lazy { AppDatabase.getDatabase(application) }
+    private val repository by lazy { BreakActivityRepository(database.breakActivityDao()) }
+    private val statisticsDao by lazy { database.activityStatisticsDao() }
 
     val settings: StateFlow<Settings> = settingsManager.getSettings()
         .stateIn(
@@ -50,52 +53,72 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleEnabled(enabled: Boolean) {
         viewModelScope.launch {
-            val currentSettings = settings.value
-            settingsManager.updateSettings(currentSettings.copy(isEnabled = enabled))
+            try {
+                val currentSettings = settings.value
+                settingsManager.updateSettings(currentSettings.copy(isEnabled = enabled))
 
-            if (enabled) {
-                BreakReminderWorker.scheduleWork(
-                    getApplication(),
-                    currentSettings.intervalMinutes
-                )
-            } else {
-                BreakReminderWorker.cancelWork(getApplication())
+                if (enabled) {
+                    BreakReminderWorker.scheduleWork(
+                        getApplication(),
+                        currentSettings.intervalMinutes
+                    )
+                } else {
+                    BreakReminderWorker.cancelWork(getApplication())
+                }
+            } catch (e: Exception) {
+                // Log error but don't crash the app
+                android.util.Log.e("HomeViewModel", "Error toggling enabled state: ${e.message}", e)
             }
         }
     }
 
     fun updateInterval(intervalMinutes: Long) {
         viewModelScope.launch {
-            val currentSettings = settings.value
-            settingsManager.updateSettings(currentSettings.copy(intervalMinutes = intervalMinutes))
+            try {
+                val currentSettings = settings.value
+                settingsManager.updateSettings(currentSettings.copy(intervalMinutes = intervalMinutes))
 
-            if (currentSettings.isEnabled) {
-                BreakReminderWorker.scheduleWork(getApplication(), intervalMinutes)
+                if (currentSettings.isEnabled) {
+                    BreakReminderWorker.scheduleWork(getApplication(), intervalMinutes)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("HomeViewModel", "Error updating interval: ${e.message}", e)
             }
         }
     }
 
     fun testNotification() {
         viewModelScope.launch {
-            val activity = repository.getRandomActivity()
-            activity?.let {
-                xyz.crearts.activebreak.workers.NotificationHelper.showBreakNotification(
-                    getApplication(),
-                    it
-                )
+            try {
+                val activity = repository.getRandomActivity()
+                activity?.let {
+                    xyz.crearts.activebreak.workers.NotificationHelper.showBreakNotification(
+                        getApplication(),
+                        it
+                    )
+                } ?: run {
+                    android.util.Log.w("HomeViewModel", "No activities available for test notification")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("HomeViewModel", "Error showing test notification: ${e.message}", e)
             }
         }
     }
 
     fun checkWorkManagerStatus(): Boolean {
-        val workManager = androidx.work.WorkManager.getInstance(getApplication())
-        val workInfos = workManager.getWorkInfosForUniqueWork(
-            xyz.crearts.activebreak.workers.BreakReminderWorker.WORK_NAME
-        ).get()
+        return try {
+            val workManager = androidx.work.WorkManager.getInstance(getApplication())
+            val workInfos = workManager.getWorkInfosForUniqueWork(
+                xyz.crearts.activebreak.workers.BreakReminderWorker.WORK_NAME
+            ).get()
 
-        return workInfos.any { 
-            it.state == androidx.work.WorkInfo.State.ENQUEUED || 
-            it.state == androidx.work.WorkInfo.State.RUNNING 
+            workInfos.any {
+                it.state == androidx.work.WorkInfo.State.ENQUEUED ||
+                it.state == androidx.work.WorkInfo.State.RUNNING
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("HomeViewModel", "Error checking WorkManager status: ${e.message}", e)
+            false
         }
     }
 }

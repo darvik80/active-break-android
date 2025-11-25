@@ -30,6 +30,10 @@ object NotificationHelper {
     const val EXTRA_ACTIVITY_DESCRIPTION = "activity_description"
     const val EXTRA_IS_TODO = "is_todo"
 
+    // Constants for notification click handling in MainActivity
+    const val EXTRA_FROM_NOTIFICATION = "from_notification"
+    const val EXTRA_NOTIFICATION_TYPE = "notification_type"
+
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_HIGH
@@ -81,9 +85,14 @@ object NotificationHelper {
         extraDescription: String?,
         isTodo: Boolean = false
     ) {
-        // Intent для открытия приложения
+        // Intent для открытия приложения с данными о нотификации
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra(EXTRA_FROM_NOTIFICATION, true)
+            putExtra(EXTRA_ACTIVITY_TITLE, extraTitle)
+            putExtra(EXTRA_ACTIVITY_DESCRIPTION, extraDescription)
+            putExtra(EXTRA_IS_TODO, isTodo)
+            putExtra(EXTRA_NOTIFICATION_TYPE, if (isTodo) "TODO" else "BREAK")
         }
         val pendingIntent = PendingIntent.getActivity(
             context, 0, intent,

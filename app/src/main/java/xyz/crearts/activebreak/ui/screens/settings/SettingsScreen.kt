@@ -290,7 +290,6 @@ fun IntegrationsCard(
     viewModel: SettingsViewModel
 ) {
     var showTelegramDialog by remember { mutableStateOf(false) }
-    var showWhatsAppDialog by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -337,37 +336,6 @@ fun IntegrationsCard(
                 }
             }
 
-            // WhatsApp
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("WhatsApp", style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        "Кнопка \"Отправить в WhatsApp\" в уведомлениях",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
-                Row {
-                    Switch(
-                        checked = settings.whatsappEnabled,
-                        onCheckedChange = { isChecked ->
-                            if (isChecked && settings.whatsappNumber.isBlank()) {
-                                showWhatsAppDialog = true
-                            } else {
-                                viewModel.updateSettings(settings.copy(whatsappEnabled = isChecked))
-                            }
-                        }
-                    )
-                    IconButton(onClick = { showWhatsAppDialog = true }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Настроить")
-                    }
-                }
-            }
-
             // Telegram Dialog
             if (showTelegramDialog) {
                 TelegramSetupDialog(
@@ -390,25 +358,6 @@ fun IntegrationsCard(
                 )
             }
 
-            // WhatsApp Dialog
-            if (showWhatsAppDialog) {
-                WhatsAppSetupDialog(
-                    currentNumber = settings.whatsappNumber,
-                    onDismiss = { showWhatsAppDialog = false },
-                    onSave = { number ->
-                        viewModel.updateSettings(
-                            settings.copy(
-                                whatsappEnabled = true,
-                                whatsappNumber = number
-                            )
-                        )
-                        showWhatsAppDialog = false
-                    },
-                    onTest = { number ->
-                        viewModel.testWhatsAppIntegration(number)
-                    }
-                )
-            }
         }
     }
 }
@@ -471,59 +420,6 @@ fun TelegramSetupDialog(
             TextButton(
                 onClick = { onSave(token, chatId) },
                 enabled = token.isNotBlank() && chatId.isNotBlank()
-            ) {
-                Text("Сохранить")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Отмена")
-            }
-        }
-    )
-}
-
-@Composable
-fun WhatsAppSetupDialog(
-    currentNumber: String,
-    onDismiss: () -> Unit,
-    onSave: (String) -> Unit,
-    onTest: (String) -> Unit
-) {
-    var number by remember { mutableStateOf(currentNumber) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Настройка WhatsApp") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    "Введите номер телефона в международном формате (с кодом страны, без +)",
-                    style = MaterialTheme.typography.bodySmall
-                )
-
-                OutlinedTextField(
-                    value = number,
-                    onValueChange = { number = it },
-                    label = { Text("Номер телефона") },
-                    placeholder = { Text("79991234567") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                
-                OutlinedButton(
-                    onClick = { onTest(number) },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = number.isNotBlank()
-                ) {
-                    Text("Тест отправки")
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onSave(number) },
-                enabled = number.isNotBlank()
             ) {
                 Text("Сохранить")
             }

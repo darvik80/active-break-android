@@ -60,22 +60,6 @@ object MessengerHelper {
     }
 
     /**
-     * Отправка сообщения в WhatsApp через Intent
-     */
-    fun sendToWhatsApp(context: Context, phoneNumber: String, message: String) {
-        try {
-            val url = "https://api.whatsapp.com/send?phone=$phoneNumber&text=${Uri.encode(message)}"
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                data = Uri.parse(url)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(intent)
-        } catch (e: Exception) {
-            Log.e("MessengerHelper", "Error sending to WhatsApp: ${e.message}", e)
-        }
-    }
-
-    /**
      * Форматирование сообщения для уведомления о перерыве
      */
     fun formatBreakMessage(activityTitle: String, activityDescription: String?): String {

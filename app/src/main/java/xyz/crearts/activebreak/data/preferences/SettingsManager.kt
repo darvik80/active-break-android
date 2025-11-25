@@ -17,9 +17,7 @@ data class Settings(
     val intervalMinutes: Long = 30,
     val telegramEnabled: Boolean = false,
     val telegramBotToken: String = "",
-    val telegramChatId: String = "",
-    val whatsappEnabled: Boolean = false,
-    val whatsappNumber: String = ""
+    val telegramChatId: String = ""
 )
 
 class SettingsManager(private val dataStore: DataStore<Preferences>) {
@@ -36,8 +34,6 @@ class SettingsManager(private val dataStore: DataStore<Preferences>) {
         val TELEGRAM_ENABLED = booleanPreferencesKey("telegram_enabled")
         val TELEGRAM_BOT_TOKEN = stringPreferencesKey("telegram_bot_token")
         val TELEGRAM_CHAT_ID = stringPreferencesKey("telegram_chat_id")
-        val WHATSAPP_ENABLED = booleanPreferencesKey("whatsapp_enabled")
-        val WHATSAPP_NUMBER = stringPreferencesKey("whatsapp_number")
     }
 
     fun getSettings(): Flow<Settings> = dataStore.data.map { preferences ->
@@ -52,9 +48,7 @@ class SettingsManager(private val dataStore: DataStore<Preferences>) {
             intervalMinutes = preferences[PreferencesKeys.INTERVAL_MINUTES] ?: 30,
             telegramEnabled = preferences[PreferencesKeys.TELEGRAM_ENABLED] ?: false,
             telegramBotToken = preferences[PreferencesKeys.TELEGRAM_BOT_TOKEN] ?: "",
-            telegramChatId = preferences[PreferencesKeys.TELEGRAM_CHAT_ID] ?: "",
-            whatsappEnabled = preferences[PreferencesKeys.WHATSAPP_ENABLED] ?: false,
-            whatsappNumber = preferences[PreferencesKeys.WHATSAPP_NUMBER] ?: ""
+            telegramChatId = preferences[PreferencesKeys.TELEGRAM_CHAT_ID] ?: ""
         )
     }
 
@@ -71,15 +65,12 @@ class SettingsManager(private val dataStore: DataStore<Preferences>) {
             preferences[PreferencesKeys.TELEGRAM_ENABLED] = settings.telegramEnabled
             preferences[PreferencesKeys.TELEGRAM_BOT_TOKEN] = settings.telegramBotToken
             preferences[PreferencesKeys.TELEGRAM_CHAT_ID] = settings.telegramChatId
-            preferences[PreferencesKeys.WHATSAPP_ENABLED] = settings.whatsappEnabled
-            preferences[PreferencesKeys.WHATSAPP_NUMBER] = settings.whatsappNumber
         }
     }
 
     companion object {
-        // Singleton instance
-        val instance: SettingsManager by lazy {
-            SettingsManager(ActiveBreakApplication.instance.dataStore)
-        }
+        // Safe access to singleton instance through Application
+        val instance: SettingsManager
+            get() = ActiveBreakApplication.instance.settingsManager
     }
 }

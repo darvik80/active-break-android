@@ -18,6 +18,13 @@ interface TodoTaskDao {
     @Query("SELECT COUNT(*) FROM todo_tasks")
     suspend fun getCount(): Int
 
+    // Optimized methods to get only one record instead of loading all tasks
+    @Query("SELECT * FROM todo_tasks WHERE is_completed = 0 AND is_paused = 0 ORDER BY due_date ASC LIMIT 1")
+    suspend fun getFirstActiveTask(): TodoTask?
+
+    @Query("SELECT * FROM todo_tasks ORDER BY created_at DESC LIMIT 1")
+    suspend fun getAnyTask(): TodoTask?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(task: TodoTask): Long
 
