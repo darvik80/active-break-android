@@ -39,7 +39,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
                     }
                 }
             }
-
             NotificationHelper.ACTION_POSTPONE -> {
                 // Close notification
                 NotificationHelper.dismissNotification(context)
@@ -54,8 +53,29 @@ class NotificationActionReceiver : BroadcastReceiver() {
                         WorkManager.getInstance(context).enqueue(workRequest)
                         Log.d("NotificationActionReceiver", "Break reminder postponed for 10 minutes")
                     } else {
-                        // Logic for postponing TODO tasks can be implemented later
-                        Log.d("NotificationActionReceiver", "TODO reminder postponed")
+                        // For TODO tasks, reschedule using TodoReminderWorker
+                        CoroutineScope(Dispatchers.IO).launch {
+                            try {
+                                val database = xyz.crearts.activebreak.data.local.AppDatabase.getDatabase(context)
+                                val todoDao = database.todoTaskDao()
+
+                                // Find the task by title (in production, should pass task ID)
+                                val matchingTask = todoDao.getFirstActiveTask()
+                                if (matchingTask != null && matchingTask.title == activityTitle) {
+                                    xyz.crearts.activebreak.workers.TodoReminderWorker.scheduleTodoReminder(
+                                        context,
+                                        matchingTask.copy(
+                                            nextDueDate = System.currentTimeMillis() + (10 * 60 * 1000) // 10 minutes
+                                        )
+                                    )
+                                    Log.d("NotificationActionReceiver", "TODO reminder postponed for 10 minutes: $activityTitle")
+                                } else {
+                                    Log.w("NotificationActionReceiver", "Could not find matching TODO task: $activityTitle")
+                                }
+                            } catch (e: Exception) {
+                                Log.e("NotificationActionReceiver", "Error postponing TODO reminder: ${e.message}", e)
+                            }
+                        }
                     }
                 } catch (e: Exception) {
                     Log.e("NotificationActionReceiver", "Error postponing reminder: ${e.message}", e)
@@ -64,7 +84,21 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 }
             }
 
+            NotificationHelper.ACTION_TOGGLE_STATUS -> {
+                // Handle status bar notification toggle action
+                try {
+                    Log.d("NotificationActionReceiver", "Status toggle action received")
 
+                    // Broadcast intent to MainActivity to handle status toggle
+                    val toggleIntent = Intent("xyz.crearts.activebreak.ACTION_TOGGLE_APP_STATUS")
+                    context.sendBroadcast(toggleIntent)
+
+                } catch (e: Exception) {
+                    Log.e("NotificationActionReceiver", "Error handling status toggle: ${e.message}", e)
+                } finally {
+                    pendingResult.finish()
+                }
+            }
 
             else -> {
                 pendingResult.finish()
@@ -85,10 +119,23 @@ class NotificationActionReceiver : BroadcastReceiver() {
             )
 
             // If this is a TODO, mark the task as completed
-            // For now, just save statistics - task completion logic can be improved later
             if (isTodo) {
-                // Future improvement: find and update the actual TODO task by title or ID
-                Log.d("NotificationActionReceiver", "TODO task completed: $activityTitle")
+                try {
+                    // Find and update the actual TODO task by title
+                    val todoDao = database.todoTaskDao()
+                    // Since we can't use Flow in suspend function, we need to find task by title
+                    // This is a simple approach - in production, we should pass task ID through notification
+                    val matchingTask = todoDao.getFirstActiveTask()
+                    if (matchingTask != null && matchingTask.title == activityTitle) {
+                        val repository = xyz.crearts.activebreak.data.repository.TodoTaskRepository(todoDao)
+                        repository.toggleTaskCompletion(matchingTask)
+                        Log.d("NotificationActionReceiver", "TODO task marked as completed: $activityTitle")
+                    } else {
+                        Log.w("NotificationActionReceiver", "Could not find matching TODO task: $activityTitle")
+                    }
+                } catch (e: Exception) {
+                    Log.e("NotificationActionReceiver", "Error updating TODO task: ${e.message}", e)
+                }
             }
         } catch (e: Exception) {
             Log.e("NotificationActionReceiver", "Failed to save activity statistics: ${e.message}", e)

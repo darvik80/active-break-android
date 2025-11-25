@@ -1,6 +1,10 @@
 package xyz.crearts.activebreak
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -24,12 +28,25 @@ import xyz.crearts.activebreak.workers.NotificationHelper
 
 class MainActivity : ComponentActivity() {
 
+    private var isAppActive = true
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
             // Разрешение получено
             NotificationHelper.createNotificationChannel(this)
+            // Show status notification after permission granted
+            updateStatusNotification()
+        }
+    }
+
+    // BroadcastReceiver to handle status toggle from notification
+    private val statusToggleReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == "xyz.crearts.activebreak.ACTION_TOGGLE_APP_STATUS") {
+                toggleAppStatus()
+            }
         }
     }
 
@@ -55,8 +72,15 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
+        // Register broadcast receiver for status toggle
+        val filter = IntentFilter("xyz.crearts.activebreak.ACTION_TOGGLE_APP_STATUS")
+        registerReceiver(statusToggleReceiver, filter, RECEIVER_NOT_EXPORTED)
+
         // Запускаем WorkManager если напоминания включены
         checkAndStartWorkManager()
+
+        // Show status notification
+        updateStatusNotification()
 
         setContent {
             ActiveBreakTheme {
@@ -98,6 +122,54 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Unregister broadcast receiver
+        try {
+            unregisterReceiver(statusToggleReceiver)
+        } catch (e: IllegalArgumentException) {
+            // Receiver was not registered, ignore
+        }
+    }
+
+    private fun toggleAppStatus() {
+        isAppActive = !isAppActive
+
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            val settingsManager = xyz.crearts.activebreak.data.preferences.SettingsManager.instance
+            val settings = settingsManager.getSettings().first()
+
+            if (isAppActive && settings.isEnabled) {
+                // Resume: start WorkManager
+                xyz.crearts.activebreak.workers.BreakReminderWorker.scheduleWork(
+                    this@MainActivity,
+                    settings.intervalMinutes
+                )
+            } else {
+                // Pause: cancel WorkManager
+                xyz.crearts.activebreak.workers.BreakReminderWorker.cancelWork(this@MainActivity)
+            }
+
+            // Update status notification
+            updateStatusNotification()
+        }
+    }
+
+    private fun updateStatusNotification() {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            val settingsManager = xyz.crearts.activebreak.data.preferences.SettingsManager.instance
+            val settings = settingsManager.getSettings().first()
+
+            if (settings.isEnabled) {
+                // Show status notification with current status
+                NotificationHelper.showStatusNotification(this@MainActivity, isAppActive)
+            } else {
+                // Hide status notification if app is disabled
+                NotificationHelper.hideStatusNotification(this@MainActivity)
             }
         }
     }

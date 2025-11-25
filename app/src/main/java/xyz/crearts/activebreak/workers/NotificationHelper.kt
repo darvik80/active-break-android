@@ -20,11 +20,15 @@ import xyz.crearts.activebreak.receiver.NotificationActionReceiver
 object NotificationHelper {
     const val CHANNEL_ID = "break_reminders"
     private const val CHANNEL_NAME = "Break Reminders"
+    const val STATUS_CHANNEL_ID = "status_bar"
+    private const val STATUS_CHANNEL_NAME = "ActiveBreak Status"
     private const val NOTIFICATION_ID = 1001
     private const val TODO_NOTIFICATION_ID = 1002
+    private const val STATUS_NOTIFICATION_ID = 1003
 
     const val ACTION_COMPLETED = "xyz.crearts.activebreak.ACTION_COMPLETED"
     const val ACTION_POSTPONE = "xyz.crearts.activebreak.ACTION_POSTPONE"
+    const val ACTION_TOGGLE_STATUS = "xyz.crearts.activebreak.ACTION_TOGGLE_STATUS"
     const val EXTRA_ACTIVITY_TITLE = "activity_title"
     const val EXTRA_ACTIVITY_DESCRIPTION = "activity_description"
     const val EXTRA_IS_TODO = "is_todo"
@@ -35,15 +39,25 @@ object NotificationHelper {
 
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            // Channel for break reminders
+            val reminderChannel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH).apply {
                 description = "Напоминания о перерывах и активности"
                 enableVibration(true)
                 setShowBadge(true)
             }
 
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+            // Channel for persistent status notification
+            val statusChannel = NotificationChannel(STATUS_CHANNEL_ID, STATUS_CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW).apply {
+                description = "Постоянное уведомление о статусе ActiveBreak"
+                enableVibration(false)
+                setShowBadge(false)
+                setSound(null, null)
+            }
+
+            notificationManager.createNotificationChannel(reminderChannel)
+            notificationManager.createNotificationChannel(statusChannel)
         }
     }
 
@@ -64,7 +78,7 @@ object NotificationHelper {
         createNotificationChannel(context)
         showNotification(
             context = context,
-            title = "Напоминание о задаче! ✅",
+            title = "Напоминание! ✅",
             contentText = task.title,
             description = task.description ?: "Время выполнить задачу!",
             notificationId = TODO_NOTIFICATION_ID,
@@ -149,5 +163,78 @@ object NotificationHelper {
         val notificationManager = NotificationManagerCompat.from(context)
         notificationManager.cancel(NOTIFICATION_ID)
         notificationManager.cancel(TODO_NOTIFICATION_ID)
+    }
+
+    /**
+     * Show persistent status notification in notification shade
+     */
+    fun showStatusNotification(context: Context, isActive: Boolean) {
+        createNotificationChannel(context)
+
+        // Intent to open the app when notification is clicked
+        val openAppIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val openAppPendingIntent = PendingIntent.getActivity(
+            context, 0, openAppIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        // Intent for toggle action
+        val toggleIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+            action = ACTION_TOGGLE_STATUS
+        }
+        val togglePendingIntent = PendingIntent.getBroadcast(
+            context, STATUS_NOTIFICATION_ID * 10 + 1, toggleIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        // Build notification
+        val statusText = if (isActive) "Активен" else "На паузе"
+        val actionText = if (isActive) "Пауза" else "Возобновить"
+        val icon = if (isActive) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
+
+        val notification = NotificationCompat.Builder(context, STATUS_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            //.setContentTitle("Перерывы")
+            .setContentText(statusText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Напоминания о перерывах: $statusText\nНажмите для управления"))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setContentIntent(openAppPendingIntent)
+            .setOngoing(true) // Makes notification persistent
+            .setShowWhen(false)
+            .addAction(icon, actionText, togglePendingIntent)
+            .build()
+
+        val notificationManager = NotificationManagerCompat.from(context)
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationManager.notify(STATUS_NOTIFICATION_ID, notification)
+        }
+    }
+
+    /**
+     * Hide persistent status notification
+     */
+    fun hideStatusNotification(context: Context) {
+        val notificationManager = NotificationManagerCompat.from(context)
+        notificationManager.cancel(STATUS_NOTIFICATION_ID)
+    }
+
+    /**
+     * Check if status notification is currently shown
+     */
+    fun isStatusNotificationShown(context: Context): Boolean {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            notificationManager.activeNotifications.any { it.id == STATUS_NOTIFICATION_ID }
+        } else {
+            // For older versions, we can't easily check, so assume false
+            false
+        }
     }
 }
