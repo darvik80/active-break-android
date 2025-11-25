@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SHORT_SERVICE" />
 
     <application
         android:name=".ActiveBreakApplication"
@@ -42,7 +43,6 @@
             <intent-filter>
                 <action android:name="xyz.crearts.activebreak.ACTION_COMPLETED" />
                 <action android:name="xyz.crearts.activebreak.ACTION_POSTPONE" />
-                <action android:name="xyz.crearts.activebreak.ACTION_SHARE" />
             </intent-filter>
         </receiver>
 
@@ -58,6 +58,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
+
+        <!-- WorkManager SystemForegroundService для Android 14+ -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="shortService"
+            tools:node="merge" />
 
     </application>
 

@@ -1,9 +1,18 @@
 package xyz.crearts.activebreak.workers
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import androidx.work.*
 import kotlinx.coroutines.flow.first
+import xyz.crearts.activebreak.MainActivity
+import xyz.crearts.activebreak.R
 import xyz.crearts.activebreak.data.local.AppDatabase
 import xyz.crearts.activebreak.data.local.entity.BreakActivity
 import xyz.crearts.activebreak.data.preferences.Settings
@@ -17,7 +26,15 @@ class BreakReminderWorker(
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
 
+    override suspend fun getForegroundInfo(): ForegroundInfo {
+        return createForegroundInfo(applicationContext)
+    }
+
     override suspend fun doWork(): Result {
+        // Use setForeground() for long-running tasks if necessary
+        // But for this short task, we just run it.
+        // If we want to show that it's running, we can promote it to foreground.
+        setForeground(createForegroundInfo(applicationContext))
         return try {
             val database = AppDatabase.getDatabase(applicationContext)
             val repository = BreakActivityRepository(database.breakActivityDao())
@@ -27,6 +44,11 @@ class BreakReminderWorker(
             val settings = settingsManager.getSettings().first()
 
             if (!isWithinActiveHours(settings)) {
+                return Result.success()
+            }
+
+            // Если уведомления о перерывах отключены
+            if (!settings.breakNotificationsEnabled) {
                 return Result.success()
             }
 
@@ -47,6 +69,33 @@ class BreakReminderWorker(
         } catch (e: Exception) {
             Log.e("BreakReminderWorker", "Error: ${e.message}", e)
             Result.failure()
+        }
+    }
+
+    private fun createForegroundInfo(context: Context): ForegroundInfo {
+        val id = "break_service_channel"
+        val title = "ActiveBreak"
+        val cancel = "Остановить"
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(id, title, NotificationManager.IMPORTANCE_LOW)
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val notification = NotificationCompat.Builder(context, id)
+            .setContentTitle("ActiveBreak работает")
+            .setTicker(title)
+            .setContentText("Ожидание времени перерыва")
+            .setSmallIcon(android.R.drawable.ic_dialog_info) // Using system icon as fallback
+            .setOngoing(true)
+            .build()
+
+        // Для Android 14+ нужно указывать тип сервиса
+        return if (Build.VERSION.SDK_INT >= 34) { // UPSIDE_DOWN_CAKE
+             ForegroundInfo(2001, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SHORT_SERVICE)
+        } else {
+             ForegroundInfo(2001, notification)
         }
     }
 

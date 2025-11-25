@@ -25,7 +25,6 @@ object NotificationHelper {
 
     const val ACTION_COMPLETED = "xyz.crearts.activebreak.ACTION_COMPLETED"
     const val ACTION_POSTPONE = "xyz.crearts.activebreak.ACTION_POSTPONE"
-    const val ACTION_SHARE = "xyz.crearts.activebreak.ACTION_SHARE"
     const val EXTRA_ACTIVITY_TITLE = "activity_title"
     const val EXTRA_ACTIVITY_DESCRIPTION = "activity_description"
     const val EXTRA_IS_TODO = "is_todo"
@@ -121,16 +120,7 @@ object NotificationHelper {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        // PendingIntent для кнопки "Поделиться"
-        val shareIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-            action = ACTION_SHARE
-            putExtra(EXTRA_ACTIVITY_TITLE, extraTitle)
-            putExtra(EXTRA_ACTIVITY_DESCRIPTION, extraDescription)
-        }
-        val sharePendingIntent = PendingIntent.getBroadcast(
-            context, notificationId * 10 + 3, shareIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
+
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
@@ -143,7 +133,6 @@ object NotificationHelper {
             .setAutoCancel(true)
             .addAction(android.R.drawable.ic_menu_send, "Выполнено", completedPendingIntent)
             .addAction(android.R.drawable.ic_menu_recent_history, "Отложить", postponePendingIntent)
-            .addAction(android.R.drawable.ic_menu_share, "Поделиться", sharePendingIntent)
             .build()
 
         val notificationManager = NotificationManagerCompat.from(context)

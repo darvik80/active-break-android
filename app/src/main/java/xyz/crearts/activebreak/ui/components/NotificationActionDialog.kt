@@ -53,6 +53,8 @@ fun NotificationActionDialog(
                 )
             }
         },
+        confirmButton = {},
+        dismissButton = {},
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -62,7 +64,7 @@ fun NotificationActionDialog(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
-                
+
                 if (!description.isNullOrBlank()) {
                     Text(
                         text = description,
@@ -70,9 +72,9 @@ fun NotificationActionDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                
+
                 HorizontalDivider()
-                
+
                 Text(
                     text = "Выберите действие:",
                     style = MaterialTheme.typography.bodyMedium,
@@ -80,13 +82,9 @@ fun NotificationActionDialog(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
-            }
-        },
-        confirmButton = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // Complete button
                 Button(
                     onClick = {
@@ -113,7 +111,7 @@ fun NotificationActionDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Выполнено")
                 }
-                
+
                 // Postpone button
                 OutlinedButton(
                     onClick = {
@@ -137,36 +135,14 @@ fun NotificationActionDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Отложить")
                 }
-                
-                // Share button
-                OutlinedButton(
-                    onClick = {
-                        try {
-                            handleShareAction(context, title, description, isTodo)
-                            onActionCompleted()
-                            onDismiss()
-                        } catch (e: Exception) {
-                            Log.e("NotificationActionDialog", "Error sharing: ${e.message}", e)
-                        }
-                    },
+
+                // Cancel button
+                TextButton(
+                    onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Поделиться")
+                    Text("Отмена")
                 }
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Отмена")
             }
         }
     )
@@ -201,36 +177,7 @@ private suspend fun handlePostponeAction(context: Context, isTodo: Boolean) {
     }
 }
 
-// Handle share action - same logic as NotificationActionReceiver
-private fun handleShareAction(context: Context, title: String, description: String?, isTodo: Boolean) {
-    val shareText = buildString {
-        if (isTodo) {
-            append("Моя задача выполнена: $title ✅")
-        } else {
-            append("Мое задание на перерыв: $title 💪")
-        }
-        
-        if (!description.isNullOrBlank()) {
-            append("\n\n$description")
-        }
-        append("\n\n#ActiveBreak #ЗдоровыйОбразЖизни")
-    }
 
-    val shareIntent = Intent().apply {
-        action = Intent.ACTION_SEND
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, shareText)
-        putExtra(Intent.EXTRA_SUBJECT, if (isTodo) "ActiveBreak - Моя задача" else "ActiveBreak - Мой перерыв")
-        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    }
-
-    val chooserIntent = Intent.createChooser(shareIntent, "Поделиться через").apply {
-        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    }
-
-    context.startActivity(chooserIntent)
-    Log.d("NotificationActionDialog", "Activity shared: $title")
-}
 
 // Save activity statistics - same logic as NotificationActionReceiver
 private suspend fun saveActivityStatistics(context: Context, activityTitle: String, isTodo: Boolean) {

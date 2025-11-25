@@ -64,17 +64,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 }
             }
 
-            NotificationHelper.ACTION_SHARE -> {
-                try {
-                    // Open sharing
-                    shareActivity(context, activityTitle, activityDescription, isTodo)
-                    Log.d("NotificationActionReceiver", "Activity shared: $activityTitle")
-                } catch (e: Exception) {
-                    Log.e("NotificationActionReceiver", "Error sharing activity: ${e.message}", e)
-                } finally {
-                    pendingResult.finish()
-                }
-            }
+
 
             else -> {
                 pendingResult.finish()
@@ -82,34 +72,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun shareActivity(context: Context, title: String, description: String?, isTodo: Boolean) {
-        val shareText = buildString {
-            if (isTodo) {
-                append("Моя задача выполнена: $title ✅")
-            } else {
-                append("Мое задание на перерыв: $title 💪")
-            }
-            
-            if (!description.isNullOrBlank()) {
-                append("\n\n$description")
-            }
-            append("\n\n#ActiveBreak #ЗдоровыйОбразЖизни")
-        }
 
-        val shareIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, shareText)
-            putExtra(Intent.EXTRA_SUBJECT, if (isTodo) "ActiveBreak - Моя задача" else "ActiveBreak - Мой перерыв")
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-
-        val chooserIntent = Intent.createChooser(shareIntent, "Поделиться через").apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-
-        context.startActivity(chooserIntent)
-    }
 
     private suspend fun saveActivityStatistics(context: Context, activityTitle: String, isTodo: Boolean) {
         try {

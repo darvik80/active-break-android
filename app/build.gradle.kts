@@ -7,14 +7,12 @@ plugins {
 
 android {
     namespace = "xyz.crearts.activebreak"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "xyz.crearts.activebreak"
         minSdk = 31
-        targetSdk = 36
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
