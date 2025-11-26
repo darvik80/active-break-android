@@ -18,7 +18,8 @@ data class Settings(
     val telegramEnabled: Boolean = false,
     val telegramBotToken: String = "",
     val telegramChatId: String = "",
-    val language: String = "system" // "system", "ru", "en"
+    val language: String = "system", // "system", "ru", "en"
+    val isFirstLaunch: Boolean = true // Flag to show language selection on first launch
 )
 
 class SettingsManager(private val dataStore: DataStore<Preferences>) {
@@ -36,6 +37,7 @@ class SettingsManager(private val dataStore: DataStore<Preferences>) {
         val TELEGRAM_BOT_TOKEN = stringPreferencesKey("telegram_bot_token")
         val TELEGRAM_CHAT_ID = stringPreferencesKey("telegram_chat_id")
         val LANGUAGE = stringPreferencesKey("language")
+        val IS_FIRST_LAUNCH = booleanPreferencesKey("is_first_launch")
     }
 
     fun getSettings(): Flow<Settings> = dataStore.data.map { preferences ->
@@ -51,7 +53,8 @@ class SettingsManager(private val dataStore: DataStore<Preferences>) {
             telegramEnabled = preferences[PreferencesKeys.TELEGRAM_ENABLED] ?: false,
             telegramBotToken = preferences[PreferencesKeys.TELEGRAM_BOT_TOKEN] ?: "",
             telegramChatId = preferences[PreferencesKeys.TELEGRAM_CHAT_ID] ?: "",
-            language = preferences[PreferencesKeys.LANGUAGE] ?: "system"
+            language = preferences[PreferencesKeys.LANGUAGE] ?: "system",
+            isFirstLaunch = preferences[PreferencesKeys.IS_FIRST_LAUNCH] ?: true
         )
     }
 
@@ -69,6 +72,14 @@ class SettingsManager(private val dataStore: DataStore<Preferences>) {
             preferences[PreferencesKeys.TELEGRAM_BOT_TOKEN] = settings.telegramBotToken
             preferences[PreferencesKeys.TELEGRAM_CHAT_ID] = settings.telegramChatId
             preferences[PreferencesKeys.LANGUAGE] = settings.language
+            preferences[PreferencesKeys.IS_FIRST_LAUNCH] = settings.isFirstLaunch
+        }
+    }
+
+    // Helper method to mark first launch as completed
+    suspend fun markFirstLaunchCompleted() {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.IS_FIRST_LAUNCH] = false
         }
     }
 

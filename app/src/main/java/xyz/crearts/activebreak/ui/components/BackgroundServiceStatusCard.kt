@@ -14,7 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import xyz.crearts.activebreak.R
 import xyz.crearts.activebreak.ui.screens.home.HomeViewModel
 
 @Composable
@@ -66,7 +68,7 @@ fun BackgroundServiceStatusCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        "Фоновый сервис",
+                        stringResource(R.string.background_service_title),
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -77,17 +79,17 @@ fun BackgroundServiceStatusCard(
                         isBatteryOptimizationIgnored.value = isIgnoringBatteryOptimizations(context)
                     }
                 ) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Обновить статус")
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.background_service_refresh))
                 }
             }
 
             Text(
                 if (isWorkManagerActive.value && settings.isEnabled) {
-                    "✓ Работает в фоне"
+                    stringResource(R.string.background_service_working)
                 } else if (settings.isEnabled) {
-                    "⚠️ Не запущен (включите напоминания)"
+                    stringResource(R.string.background_service_not_started)
                 } else {
-                    "⏸️ Приостановлен"
+                    stringResource(R.string.background_service_paused)
                 },
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -108,11 +110,11 @@ fun BackgroundServiceStatusCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            "Оптимизация батареи",
+                            stringResource(R.string.battery_optimization_title),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
-                            "Может останавливать фоновую работу",
+                            stringResource(R.string.battery_optimization_description),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f)
                         )
@@ -123,12 +125,12 @@ fun BackgroundServiceStatusCard(
                     onClick = { requestIgnoreBatteryOptimizations(context) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Отключить оптимизацию")
+                    Text(stringResource(R.string.battery_optimization_disable))
                 }
             }
 
             Text(
-                "💡 Для стабильной работы в фоне разрешите приложению работать без ограничений в настройках Android",
+                stringResource(R.string.battery_optimization_tip),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
             )

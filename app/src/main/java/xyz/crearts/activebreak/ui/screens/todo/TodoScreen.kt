@@ -13,13 +13,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import xyz.crearts.activebreak.R
 import xyz.crearts.activebreak.data.local.entity.TodoTask
 import xyz.crearts.activebreak.ui.navigation.Screen
 import java.text.SimpleDateFormat
@@ -211,10 +210,10 @@ fun TodoScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("TODO-список") },
+                title = { Text(stringResource(R.string.todo_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.nav_back))
                     }
                 }
             )
@@ -229,20 +228,20 @@ fun TodoScreen(
                 NavigationBarItem(
                     selected = false,
                     onClick = { navController.navigate(Screen.Home.route) },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Главная") },
-                    label = { Text("Главная") }
+                    icon = { Icon(Icons.Default.Home, contentDescription = stringResource(R.string.activities_home)) },
+                    label = { Text(stringResource(R.string.activities_home)) }
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = { navController.navigate(Screen.Activities.route) },
-                    icon = { Icon(Icons.Default.FitnessCenter, contentDescription = "Активности") },
-                    label = { Text("Активности") }
+                    icon = { Icon(Icons.Default.FitnessCenter, contentDescription = stringResource(R.string.activities_title)) },
+                    label = { Text(stringResource(R.string.activities_title)) }
                 )
                 NavigationBarItem(
                     selected = true,
                     onClick = { },
-                    icon = { Icon(Icons.Default.CheckCircle, contentDescription = "TODO") },
-                    label = { Text("TODO") }
+                    icon = { Icon(Icons.Default.CheckCircle, contentDescription = stringResource(R.string.activities_todo)) },
+                    label = { Text(stringResource(R.string.activities_todo)) }
                 )
             }
         }
@@ -265,11 +264,11 @@ fun TodoScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "Нет задач",
+                        stringResource(R.string.todo_no_tasks),
                         style = MaterialTheme.typography.titleLarge
                     )
                     Text(
-                        "Добавьте первую задачу",
+                        stringResource(R.string.todo_add_first_task),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -419,7 +418,7 @@ fun CompactTodoTaskCard(
                 IconButton(onClick = { isExpanded = !isExpanded }, modifier = Modifier.size(24.dp)) {
                     Icon(
                         if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                        contentDescription = if (isExpanded) "Свернуть" else "Развернуть"
+                        contentDescription = if (isExpanded) stringResource(R.string.todo_collapse) else stringResource(R.string.todo_expand)
                     )
                 }
             }
@@ -449,11 +448,11 @@ fun CompactTodoTaskCard(
                         // Периодичность
                         if (task.recurrenceType != "NONE") {
                             val recurrenceText = when (task.recurrenceType) {
-                                "DAILY" -> "Ежедневно"
-                                "WEEKLY" -> "Еженедельно"
-                                "BIWEEKLY" -> "Раз в 2 нед"
-                                "MONTHLY" -> "Ежемесячно"
-                                "CUSTOM_DAYS" -> task.recurrenceDays ?: "По дням"
+                                "DAILY" -> stringResource(R.string.recurrence_daily)
+                                "WEEKLY" -> stringResource(R.string.recurrence_weekly)
+                                "BIWEEKLY" -> stringResource(R.string.recurrence_biweekly)
+                                "MONTHLY" -> stringResource(R.string.recurrence_monthly)
+                                "CUSTOM_DAYS" -> task.recurrenceDays ?: stringResource(R.string.recurrence_weekdays)
                                 else -> ""
                             }
                             AssistChip(
@@ -468,7 +467,7 @@ fun CompactTodoTaskCard(
                         if (task.reminderEnabled) {
                             AssistChip(
                                 onClick = {},
-                                label = { Text("${task.reminderMinutesBefore} мин", style = MaterialTheme.typography.labelSmall) },
+                                label = { Text("${task.reminderMinutesBefore} ${stringResource(R.string.minutes_short)}", style = MaterialTheme.typography.labelSmall) },
                                 leadingIcon = { Icon(Icons.Default.Notifications, null, Modifier.size(14.dp)) },
                                 modifier = Modifier.height(28.dp)
                             )
@@ -477,7 +476,7 @@ fun CompactTodoTaskCard(
                         if (task.isPaused) {
                              AssistChip(
                                 onClick = {},
-                                label = { Text("На паузе", style = MaterialTheme.typography.labelSmall) },
+                                label = { Text(stringResource(R.string.todo_on_pause), style = MaterialTheme.typography.labelSmall) },
                                 leadingIcon = { Icon(Icons.Default.Pause, null, Modifier.size(14.dp)) },
                                 colors = AssistChipDefaults.assistChipColors(
                                     containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -497,17 +496,17 @@ fun CompactTodoTaskCard(
                         TextButton(onClick = onPause) {
                             Icon(if (task.isPaused) Icons.Default.PlayArrow else Icons.Default.Pause, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(if (task.isPaused) "Возобновить" else "Пауза")
+                            Text(if (task.isPaused) stringResource(R.string.todo_resume) else stringResource(R.string.todo_pause))
                         }
                         TextButton(onClick = onEdit) {
                             Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Изменить")
+                            Text(stringResource(R.string.todo_edit))
                         }
                         TextButton(onClick = onDelete, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
                             Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Удалить")
+                            Text(stringResource(R.string.todo_delete))
                         }
                     }
                 }

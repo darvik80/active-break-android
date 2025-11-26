@@ -43,14 +43,14 @@ object NotificationHelper {
 
             // Channel for break reminders
             val reminderChannel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Напоминания о перерывах и активности"
+                description = context.getString(R.string.notification_channel_break_reminders)
                 enableVibration(true)
                 setShowBadge(true)
             }
 
             // Channel for persistent status notification
             val statusChannel = NotificationChannel(STATUS_CHANNEL_ID, STATUS_CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW).apply {
-                description = "Постоянное уведомление о статусе ActiveBreak"
+                description = context.getString(R.string.notification_channel_status)
                 enableVibration(false)
                 setShowBadge(false)
                 setSound(null, null)
@@ -65,9 +65,9 @@ object NotificationHelper {
         createNotificationChannel(context)
         showNotification(
             context = context,
-            title = "Время для перерыва! 🚀",
+            title = context.getString(R.string.notification_break_title),
             contentText = activity.title,
-            description = activity.description ?: "Сделайте небольшой перерыв для здоровья!",
+            description = activity.description ?: context.getString(R.string.notification_break_default_description),
             notificationId = NOTIFICATION_ID,
             extraTitle = activity.title,
             extraDescription = activity.description
@@ -78,9 +78,9 @@ object NotificationHelper {
         createNotificationChannel(context)
         showNotification(
             context = context,
-            title = "Напоминание! ✅",
+            title = context.getString(R.string.notification_todo_title),
             contentText = task.title,
-            description = task.description ?: "Время выполнить задачу!",
+            description = task.description ?: context.getString(R.string.notification_todo_default_description),
             notificationId = TODO_NOTIFICATION_ID,
             extraTitle = task.title,
             extraDescription = task.description,
@@ -145,8 +145,8 @@ object NotificationHelper {
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
-            .addAction(android.R.drawable.ic_menu_send, "Выполнено", completedPendingIntent)
-            .addAction(android.R.drawable.ic_menu_recent_history, "Отложить", postponePendingIntent)
+            .addAction(android.R.drawable.ic_menu_send, context.getString(R.string.notification_action_completed), completedPendingIntent)
+            .addAction(android.R.drawable.ic_menu_recent_history, context.getString(R.string.notification_action_postpone), postponePendingIntent)
             .build()
 
         val notificationManager = NotificationManagerCompat.from(context)
@@ -190,15 +190,15 @@ object NotificationHelper {
         )
 
         // Build notification
-        val statusText = if (isActive) "Активен" else "На паузе"
-        val actionText = if (isActive) "Пауза" else "Возобновить"
+        val statusText = if (isActive) context.getString(R.string.notification_status_active) else context.getString(R.string.notification_status_paused)
+        val actionText = if (isActive) context.getString(R.string.notification_action_pause) else context.getString(R.string.notification_action_resume)
         val icon = if (isActive) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
 
         val notification = NotificationCompat.Builder(context, STATUS_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             //.setContentTitle("Перерывы")
             .setContentText(statusText)
-            .setStyle(NotificationCompat.BigTextStyle().bigText("Напоминания о перерывах: $statusText\nНажмите для управления"))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(context.getString(R.string.notification_status_description, statusText)))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setContentIntent(openAppPendingIntent)

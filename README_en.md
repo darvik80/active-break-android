@@ -63,7 +63,7 @@ To create a signed APK or AAB file:
 
 ## 🆕 Latest Updates
 
-### November 25, 2024 - Persistent Notification Feature
+### November 25, 2025 - Persistent Notification Feature
 
 **Added persistent notification in notification panel (Notification Shade):**
 

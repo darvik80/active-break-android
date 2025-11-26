@@ -8,13 +8,17 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
@@ -23,8 +27,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import xyz.crearts.activebreak.ui.components.NotificationActionDialog
 import xyz.crearts.activebreak.ui.navigation.NavGraph
+import xyz.crearts.activebreak.ui.navigation.Screen
 import xyz.crearts.activebreak.ui.theme.ActiveBreakTheme
 import xyz.crearts.activebreak.workers.NotificationHelper
+import xyz.crearts.activebreak.data.preferences.SettingsManager
+import xyz.crearts.activebreak.utils.LocaleHelper
 
 class MainActivity : ComponentActivity() {
 
@@ -52,6 +59,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Apply saved language setting
+        applySavedLanguage()
 
         // Запрашиваем разрешение на уведомления для Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -96,6 +106,34 @@ class MainActivity : ComponentActivity() {
                     var notificationDescription by remember { mutableStateOf<String?>(null) }
                     var isNotificationTodo by remember { mutableStateOf(false) }
 
+                    // Determine start destination based on first launch
+                    var startDestination by remember { mutableStateOf(Screen.Home.route) }
+                    var isInitialized by remember { mutableStateOf(false) }
+
+                    LaunchedEffect(Unit) {
+                        Log.e("MainActivity", "LaunchedEffect started - initial setup")
+                        try {
+                            val settingsManager = SettingsManager.instance
+                            Log.e("MainActivity", "SettingsManager obtained")
+                            val settings = settingsManager.getSettings().first()
+                            Log.e("MainActivity", "Settings obtained: isFirstLaunch = ${settings.isFirstLaunch}")
+
+                            startDestination = if (settings.isFirstLaunch) {
+                                Log.e("MainActivity", "Setting startDestination to LanguageSelection")
+                                Screen.LanguageSelection.route
+                            } else {
+                                Log.e("MainActivity", "Setting startDestination to Home")
+                                Screen.Home.route
+                            }
+                            Log.e("MainActivity", "Final startDestination = $startDestination")
+                            isInitialized = true
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "Error in LaunchedEffect: ${e.message}", e)
+                            startDestination = Screen.Home.route
+                            isInitialized = true
+                        }
+                    }
+
                     // Check if opened from notification
                     LaunchedEffect(Unit) {
                         checkNotificationIntent { title, description, isTodo ->
@@ -106,7 +144,23 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    NavGraph(navController = navController)
+                    // Only show NavGraph after initialization
+                    if (isInitialized) {
+                        Log.e("MainActivity", "Rendering NavGraph with startDestination: $startDestination")
+                        NavGraph(
+                            navController = navController,
+                            startDestination = startDestination
+                        )
+                    } else {
+                        Log.e("MainActivity", "Waiting for initialization...")
+                        // Show loading indicator while initializing
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
 
                     // Show notification action dialog if needed
                     if (showNotificationDialog) {
@@ -199,5 +253,33 @@ class MainActivity : ComponentActivity() {
 
             onNotificationFound(title, description, isTodo)
         }
+    }
+
+    // Apply saved language setting
+    private fun applySavedLanguage() {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            val settingsManager = SettingsManager.instance
+            val settings = settingsManager.getSettings().first()
+            if (settings.language != "system") {
+                LocaleHelper.setLocale(this@MainActivity, settings.language)
+            }
+        }
+    }
+
+    override fun attachBaseContext(newBase: Context?) {
+        // Try to get saved language synchronously from SharedPreferences
+        val context = newBase?.let { ctx ->
+            try {
+                // Get language from SharedPreferences directly (synchronous)
+                val sharedPrefs = ctx.getSharedPreferences("settings", Context.MODE_PRIVATE)
+                val savedLanguage = sharedPrefs.getString("language", "system") ?: "system"
+                LocaleHelper.applyLanguage(ctx, savedLanguage)
+            } catch (e: Exception) {
+                // Fallback to original context if something goes wrong
+                ctx
+            }
+        } ?: newBase
+
+        super.attachBaseContext(context)
     }
 }

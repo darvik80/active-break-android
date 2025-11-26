@@ -21,6 +21,7 @@ import xyz.crearts.activebreak.workers.MessengerHelper
 sealed class SettingsUiEvent {
     data class ShowMessage(val message: String) : SettingsUiEvent()
     data class ShowError(val error: String) : SettingsUiEvent()
+    object ShowRestartDialog : SettingsUiEvent()
 }
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -88,10 +89,19 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun updateLanguage(languageCode: String) {
         viewModelScope.launch {
             val currentSettings = settings.value
-            settingsManager.updateSettings(
-                currentSettings.copy(language = languageCode)
-            )
-            sendEvent(SettingsUiEvent.ShowMessage("Язык изменен. Перезапустите приложение для применения изменений."))
+
+            // Check if language actually changed
+            val languageChanged = currentSettings.language != languageCode
+
+            if (languageChanged) {
+                settingsManager.updateSettings(
+                    currentSettings.copy(language = languageCode)
+                )
+                // Apply locale change immediately
+                xyz.crearts.activebreak.utils.LocaleHelper.setLocale(languageCode)
+                // Show restart dialog only if language changed
+                sendEvent(SettingsUiEvent.ShowRestartDialog)
+            }
         }
     }
 
@@ -169,6 +179,16 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             } finally {
                 _isLoading.value = false
             }
+        }
+    }
+
+    fun resetFirstLaunchFlag() {
+        viewModelScope.launch {
+            val currentSettings = settings.value
+            settingsManager.updateSettings(
+                currentSettings.copy(isFirstLaunch = true)
+            )
+            sendEvent(SettingsUiEvent.ShowMessage("Флаг первого запуска сброшен. Перезапустите приложение для тестирования."))
         }
     }
 }

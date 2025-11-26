@@ -74,8 +74,8 @@ class BreakReminderWorker(
 
     private fun createForegroundInfo(context: Context): ForegroundInfo {
         val id = "break_service_channel"
-        val title = "ActiveBreak"
-        val cancel = "Остановить"
+        val title = context.getString(R.string.worker_title)
+        val cancel = context.getString(R.string.worker_stop)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(id, title, NotificationManager.IMPORTANCE_LOW)
@@ -84,9 +84,9 @@ class BreakReminderWorker(
         }
 
         val notification = NotificationCompat.Builder(context, id)
-            .setContentTitle("ActiveBreak работает")
+            .setContentTitle(context.getString(R.string.worker_running_title))
             .setTicker(title)
-            .setContentText("Ожидание времени перерыва")
+            .setContentText(context.getString(R.string.worker_waiting_text))
             .setSmallIcon(android.R.drawable.ic_dialog_info) // Using system icon as fallback
             .setOngoing(true)
             .build()

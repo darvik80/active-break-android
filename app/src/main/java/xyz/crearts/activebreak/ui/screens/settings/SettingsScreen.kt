@@ -23,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import xyz.crearts.activebreak.R
 import xyz.crearts.activebreak.utils.LocaleHelper
+import xyz.crearts.activebreak.utils.AppRestartHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +33,27 @@ fun SettingsScreen(
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    // State for restart dialog
+    var showRestartDialog by remember { mutableStateOf(false) }
+
+    // Handle UI events
+    LaunchedEffect(viewModel) {
+        viewModel.uiEvents.collect { event ->
+            when (event) {
+                is SettingsUiEvent.ShowRestartDialog -> {
+                    showRestartDialog = true
+                }
+                is SettingsUiEvent.ShowMessage -> {
+                    // Handle other messages if needed
+                }
+                is SettingsUiEvent.ShowError -> {
+                    // Handle errors if needed
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -326,12 +348,62 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Тест уведомления TODO")
                     }
+
+                    OutlinedButton(
+                        onClick = { viewModel.resetFirstLaunchFlag() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Language, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Сбросить флаг первого запуска")
+                    }
                 }
             }
             
             // Дополнительный отступ внизу для удобства прокрутки
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
+
+    // Restart dialog for language change
+    if (showRestartDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                // Disable dismiss on outside click to prevent accidental closing
+                // User must explicitly choose an option
+            },
+            title = {
+                Text(
+                    "Перезапуск приложения",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            },
+            text = {
+                Text(
+                    "Язык изменен! Для полного применения изменений рекомендуется перезапустить приложение.\n\nВыберите действие:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showRestartDialog = false
+                        AppRestartHelper.restartApp(context)
+                    }
+                ) {
+                    Text("Перезапустить сейчас")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        showRestartDialog = false
+                    }
+                ) {
+                    Text("Продолжить без перезапуска")
+                }
+            }
+        )
     }
 }
 
@@ -489,7 +561,7 @@ fun LanguageSelectionDialog(
     onDismiss: () -> Unit,
     onLanguageSelected: (String) -> Unit
 ) {
-    val availableLanguages = LocaleHelper.getAvailableLanguages()
+    val availableLanguages = LocaleHelper.getFirstLaunchLanguages()
 
     AlertDialog(
         onDismissRequest = onDismiss,

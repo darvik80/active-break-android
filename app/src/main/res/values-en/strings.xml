@@ -52,7 +52,168 @@
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     
+    <!-- Activities Screen -->
+    <string name="activities_title">Activities</string>
+    <string name="activities_add">Add</string>
+    <string name="activities_delete">Delete</string>
+    <string name="activities_home">Home</string>
+    <string name="activities_todo">TODO</string>
+    <string name="activity_new">New Activity</string>
+    <string name="activity_name">Name</string>
+    <string name="activity_description">Description (optional)</string>
+    <string name="activity_time">Time: %1$s</string>
+    <string name="activity_time_select">Select</string>
+    <string name="activity_weight">Weight (priority): %1$d</string>
+    <string name="activity_weight_label">Weight: %1$d</string>
+    <string name="activity_select_time">Select Time</string>
+    <string name="activity_close">Close</string>
+    <string name="activity_add_button">Add</string>
+
+    <!-- Time of Day -->
+    <string name="time_early_morning">🌅 Morning (6-9)</string>
+    <string name="time_late_morning">☀️ Late Morning (10-11)</string>
+    <string name="time_midday">🌞 Midday (12-14)</string>
+    <string name="time_afternoon">🌤️ Afternoon (15-17)</string>
+    <string name="time_evening">🌆 Evening (18-20)</string>
+    <string name="time_late_evening">🌙 Late Evening (21-23)</string>
+    <string name="time_any">⏰ Anytime</string>
+    <string name="time_other">Other</string>
+
+    <!-- Time Labels Short -->
+    <string name="time_morning">Morning</string>
+    <string name="time_late_morning_short">Late Morning</string>
+    <string name="time_lunch">Lunch</string>
+    <string name="time_day">Day</string>
+    <string name="time_evening_short">Evening</string>
+    <string name="time_late_evening_short">Late Evening</string>
+    <string name="time_any_short">Any</string>
+
+    <!-- Todo Screen -->
+    <string name="todo_title">TODO List</string>
+    <string name="todo_select_time">Select Time</string>
+    <string name="todo_increase_hour">Increase hour</string>
+    <string name="todo_decrease_hour">Decrease hour</string>
+    <string name="todo_increase_minute">Increase minutes</string>
+    <string name="todo_decrease_minute">Decrease minutes</string>
+    <string name="todo_task_name">Name</string>
+    <string name="todo_task_description">Description (optional)</string>
+    <string name="todo_recurrence">Repeat: %1$s</string>
+    <string name="todo_recurrence_title">Recurrence</string>
+    <string name="todo_reminder_time">Reminder Time</string>
+    <string name="todo_category">Select Category</string>
+    <string name="todo_pause">Pause</string>
+    <string name="todo_resume">Resume</string>
+    <string name="todo_edit">Edit</string>
+    <string name="todo_delete">Delete</string>
+    <string name="todo_add">Add</string>
+    <string name="todo_save">Save</string>
+    <string name="todo_no_tasks">No tasks</string>
+    <string name="todo_add_first_task">Add your first task</string>
+    <string name="todo_expand">Expand</string>
+    <string name="todo_collapse">Collapse</string>
+    <string name="todo_on_pause">Paused</string>
+    <string name="todo_new_task">New Task</string>
+    <string name="todo_edit_task">Edit Task</string>
+    <string name="todo_select_date">Select Date</string>
+    <string name="todo_date_label">Date: %1$s</string>
+    <string name="todo_time_label">Time: %1$s</string>
+    <string name="todo_reminder_label">Reminder</string>
+    <string name="todo_close">Close</string>
+
+    <!-- Days of Week -->
+    <string name="day_monday">Monday</string>
+    <string name="day_tuesday">Tuesday</string>
+    <string name="day_wednesday">Wednesday</string>
+    <string name="day_thursday">Thursday</string>
+    <string name="day_friday">Friday</string>
+    <string name="day_saturday">Saturday</string>
+    <string name="day_sunday">Sunday</string>
+
+    <!-- Recurrence Options -->
+    <string name="recurrence_once">Once</string>
+    <string name="recurrence_daily">Daily</string>
+    <string name="recurrence_weekly">Weekly</string>
+    <string name="recurrence_biweekly">Every 2 weeks</string>
+    <string name="recurrence_monthly">Monthly</string>
+    <string name="recurrence_weekdays">By weekdays</string>
+
+    <!-- Reminder Times -->
+    <string name="reminder_5min">5 minutes before</string>
+    <string name="reminder_15min">15 minutes before</string>
+    <string name="reminder_30min">30 minutes before</string>
+    <string name="reminder_1hour">1 hour before</string>
+    <string name="reminder_2hours">2 hours before</string>
+    <string name="reminder_1day">1 day before</string>
+
+    <!-- Home Screen -->
+    <string name="home_title">ActiveBreak 🚀</string>
+    <string name="home_settings">Settings</string>
+    <string name="home_view_all_activities">View all activities</string>
+    <string name="home_manage">Manage</string>
+    <string name="home_manage_activities">Manage activities</string>
+    <string name="home_break_reminders">Break reminders</string>
+    <string name="home_enabled">Enabled</string>
+    <string name="home_disabled">Disabled</string>
+    <string name="home_active_time">Active time:</string>
+    <string name="home_reminder_interval">Reminder interval</string>
+    <string name="home_every_minutes">Every %1$d minutes</string>
+    <string name="home_configure">Configure</string>
+    <string name="home_active_exercises">Active exercises (%1$d)</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_break_reminders">Break and activity reminders</string>
+    <string name="notification_channel_status">ActiveBreak status persistent notification</string>
+    <string name="notification_break_title">Time for a break! 🚀</string>
+    <string name="notification_break_default_description">Take a small break for your health!</string>
+    <string name="notification_todo_title">Reminder! ✅</string>
+    <string name="notification_todo_default_description">Time to complete the task!</string>
+    <string name="notification_action_completed">Completed</string>
+    <string name="notification_action_postpone">Postpone</string>
+    <string name="notification_status_active">Active</string>
+    <string name="notification_status_paused">Paused</string>
+    <string name="notification_action_pause">Pause</string>
+    <string name="notification_action_resume">Resume</string>
+    <string name="notification_status_description">Break reminders: %1$s\nTap to manage</string>
+    <string name="notification_done">Done</string>
+    <string name="notification_postpone">Postpone</string>
+    <string name="notification_working">ActiveBreak is running</string>
+    <string name="notification_waiting">Waiting for break time</string>
+    <string name="notification_breaks_status">Break reminders: %1$s\nTap to manage</string>
+
+    <!-- Worker -->
+    <string name="worker_title">ActiveBreak</string>
+    <string name="worker_stop">Stop</string>
+    <string name="worker_running_title">ActiveBreak is running</string>
+    <string name="worker_waiting_text">Waiting for break time</string>
+
+    <!-- Background Service Status Card -->
+    <string name="background_service_title">Background service</string>
+    <string name="background_service_refresh">Refresh status</string>
+    <string name="background_service_working">✓ Running in background</string>
+    <string name="background_service_not_started">⚠️ Not started (enable reminders)</string>
+    <string name="background_service_paused">⏸️ Paused</string>
+    <string name="battery_optimization_title">Battery optimization</string>
+    <string name="battery_optimization_description">May stop background work</string>
+    <string name="battery_optimization_disable">Disable optimization</string>
+    <string name="battery_optimization_tip">💡 For stable background operation, allow the app to run without restrictions in Android settings</string>
+
+    <!-- Language Selection Screen -->
+    <string name="language_selection_title">Choose Language</string>
+    <string name="language_selection_subtitle">Select your preferred language for the app</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_english">English</string>
+    <string name="language_continue">Continue</string>
+    <string name="language_change_restart_title">App Restart</string>
+    <string name="language_change_restart_message">The app needs to restart to apply the new language. Restart now?</string>
+    <string name="language_restart_now">Restart</string>
+    <string name="language_restart_later">Later</string>
+
+    <!-- Test Task -->
+    <string name="test_task_title">Test Task</string>
+    <string name="test_task_description">This is a test reminder to check notifications</string>
+
     <!-- Common -->
     <string name="ok">OK</string>
     <string name="error">Error</string>
+    <string name="minutes_short">min</string>
 </resources>
