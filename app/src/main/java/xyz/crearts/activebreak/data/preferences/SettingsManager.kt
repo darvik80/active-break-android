@@ -17,7 +17,8 @@ data class Settings(
     val intervalMinutes: Long = 30,
     val telegramEnabled: Boolean = false,
     val telegramBotToken: String = "",
-    val telegramChatId: String = ""
+    val telegramChatId: String = "",
+    val language: String = "system" // "system", "ru", "en"
 )
 
 class SettingsManager(private val dataStore: DataStore<Preferences>) {
@@ -34,6 +35,7 @@ class SettingsManager(private val dataStore: DataStore<Preferences>) {
         val TELEGRAM_ENABLED = booleanPreferencesKey("telegram_enabled")
         val TELEGRAM_BOT_TOKEN = stringPreferencesKey("telegram_bot_token")
         val TELEGRAM_CHAT_ID = stringPreferencesKey("telegram_chat_id")
+        val LANGUAGE = stringPreferencesKey("language")
     }
 
     fun getSettings(): Flow<Settings> = dataStore.data.map { preferences ->
@@ -48,7 +50,8 @@ class SettingsManager(private val dataStore: DataStore<Preferences>) {
             intervalMinutes = preferences[PreferencesKeys.INTERVAL_MINUTES] ?: 30,
             telegramEnabled = preferences[PreferencesKeys.TELEGRAM_ENABLED] ?: false,
             telegramBotToken = preferences[PreferencesKeys.TELEGRAM_BOT_TOKEN] ?: "",
-            telegramChatId = preferences[PreferencesKeys.TELEGRAM_CHAT_ID] ?: ""
+            telegramChatId = preferences[PreferencesKeys.TELEGRAM_CHAT_ID] ?: "",
+            language = preferences[PreferencesKeys.LANGUAGE] ?: "system"
         )
     }
 
@@ -65,6 +68,7 @@ class SettingsManager(private val dataStore: DataStore<Preferences>) {
             preferences[PreferencesKeys.TELEGRAM_ENABLED] = settings.telegramEnabled
             preferences[PreferencesKeys.TELEGRAM_BOT_TOKEN] = settings.telegramBotToken
             preferences[PreferencesKeys.TELEGRAM_CHAT_ID] = settings.telegramChatId
+            preferences[PreferencesKeys.LANGUAGE] = settings.language
         }
     }
 

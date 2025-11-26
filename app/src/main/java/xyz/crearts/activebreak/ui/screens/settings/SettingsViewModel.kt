@@ -85,6 +85,16 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun updateLanguage(languageCode: String) {
+        viewModelScope.launch {
+            val currentSettings = settings.value
+            settingsManager.updateSettings(
+                currentSettings.copy(language = languageCode)
+            )
+            sendEvent(SettingsUiEvent.ShowMessage("Язык изменен. Перезапустите приложение для применения изменений."))
+        }
+    }
+
     fun testBreakNotification() {
         viewModelScope.launch {
             try {

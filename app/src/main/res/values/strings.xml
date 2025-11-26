@@ -1,3 +1,58 @@
 <resources>
     <string name="app_name">ActiveBreak</string>
+
+    <!-- Navigation -->
+    <string name="nav_back">Назад</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_active_time">Активное время</string>
+    <string name="settings_start_time">Начало:</string>
+    <string name="settings_end_time">Конец:</string>
+    <string name="settings_reminder_interval">Интервал напоминаний</string>
+    <string name="settings_minutes">минут</string>
+    <string name="settings_min_short">мин</string>
+    <string name="settings_notifications">Уведомления</string>
+    <string name="settings_breaks">Перерывы</string>
+    <string name="settings_todos">Задачи (TODO)</string>
+    <string name="settings_language">Язык</string>
+    <string name="settings_language_russian">Русский</string>
+    <string name="settings_language_english">English</string>
+
+    <!-- Tips -->
+    <string name="tip_title">💡 Совет</string>
+    <string name="tip_1">Рекомендуется делать перерыв каждые 30-45 минут для поддержания здоровья и продуктивности.</string>
+    <string name="tip_2">Пейте воду регулярно, даже если не чувствуете жажды. Это улучшает работу мозга 🧠.</string>
+    <string name="tip_3">Проветривайте помещение каждые 2-3 часа. Свежий воздух бодрит! 🌬️</string>
+    <string name="tip_4">Правило 20-20-20: каждые 20 минут смотрите на 20 футов (6 метров) вдаль в течение 20 секунд 👀.</string>
+    <string name="tip_5">Короткая прогулка помогает освежить мысли и улучшить концентрацию 🚶.</string>
+    <string name="tip_6">Следите за осанкой: держите спину ровно, а монитор на уровне глаз 🪑.</string>
+    <string name="tip_7">Не забывайте моргать, глядя в экран, чтобы избежать сухости глаз 👁️.</string>
+    <string name="tip_8">Небольшая разминка шеи поможет избежать головной боли 🧘‍♂️.</string>
+
+    <!-- Integrations -->
+    <string name="integrations_title">Интеграции с мессенджерами</string>
+    <string name="telegram_bot">Telegram Bot</string>
+    <string name="telegram_configured">Настроен ✓</string>
+    <string name="configure">Настроить</string>
+
+    <!-- Testing -->
+    <string name="testing_title">🧪 Тестирование</string>
+    <string name="testing_description">Проверьте работу уведомлений</string>
+    <string name="test_break_notification">Тест уведомления о перерыве</string>
+    <string name="test_todo_notification">Тест уведомления TODO</string>
+
+    <!-- Telegram Setup Dialog -->
+    <string name="telegram_setup_title">Настройка Telegram Bot</string>
+    <string name="telegram_instructions_title">Инструкция:</string>
+    <string name="telegram_instructions">1. Создайте бота через @BotFather\n2. Скопируйте токен бота\n3. Напишите боту /start\n4. Получите chat_id через @userinfobot</string>
+    <string name="bot_token">Bot Token</string>
+    <string name="chat_id">Chat ID</string>
+    <string name="test_send">Тест отправки</string>
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+
+    <!-- Common -->
+    <string name="ok">ОК</string>
+    <string name="error">Ошибка</string>
 </resources>

@@ -1,11 +1,13 @@
 package xyz.crearts.activebreak.ui.screens.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -14,10 +16,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import xyz.crearts.activebreak.R
+import xyz.crearts.activebreak.utils.LocaleHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,10 +36,10 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Настройки") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.nav_back))
                     }
                 }
             )
@@ -56,7 +61,7 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        "Активное время",
+                        stringResource(R.string.settings_active_time),
                         style = MaterialTheme.typography.titleMedium
                     )
 
@@ -72,7 +77,7 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Начало:")
+                            Text(stringResource(R.string.settings_start_time))
                             Text(
                                 "${settings.startHour}:${String.format("%02d", settings.startMinute)}",
                                 style = MaterialTheme.typography.bodyLarge,
@@ -90,7 +95,7 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Конец:")
+                            Text(stringResource(R.string.settings_end_time))
                             Text(
                                 "${settings.endHour}:${String.format("%02d", settings.endMinute)}",
                                 style = MaterialTheme.typography.bodyLarge,
@@ -125,6 +130,52 @@ fun SettingsScreen(
                 }
             }
 
+            // Language Settings Card
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.settings_language),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    var showLanguageDialog by remember { mutableStateOf(false) }
+
+                    OutlinedButton(
+                        onClick = { showLanguageDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(stringResource(R.string.settings_language))
+                            Text(
+                                LocaleHelper.getLanguageDisplayName(settings.language),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    if (showLanguageDialog) {
+                        LanguageSelectionDialog(
+                            currentLanguage = settings.language,
+                            onDismiss = { showLanguageDialog = false },
+                            onLanguageSelected = { languageCode: String ->
+                                viewModel.updateLanguage(languageCode)
+                                showLanguageDialog = false
+                            }
+                        )
+                    }
+                }
+            }
+
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -133,12 +184,12 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        "Интервал напоминаний",
+                        stringResource(R.string.settings_reminder_interval),
                         style = MaterialTheme.typography.titleMedium
                     )
 
                     Text(
-                        "${settings.intervalMinutes} минут",
+                        "${settings.intervalMinutes} ${stringResource(R.string.settings_minutes)}",
                         style = MaterialTheme.typography.headlineMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -154,8 +205,8 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("15 мин", style = MaterialTheme.typography.bodySmall)
-                        Text("120 мин", style = MaterialTheme.typography.bodySmall)
+                        Text("15 ${stringResource(R.string.settings_min_short)}", style = MaterialTheme.typography.bodySmall)
+                        Text("120 ${stringResource(R.string.settings_min_short)}", style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -168,7 +219,7 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        "Уведомления",
+                        stringResource(R.string.settings_notifications),
                         style = MaterialTheme.typography.titleMedium
                     )
 
@@ -177,7 +228,7 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Перерывы")
+                        Text(stringResource(R.string.settings_breaks))
                         Switch(
                             checked = settings.breakNotificationsEnabled,
                             onCheckedChange = { viewModel.updateSettings(settings.copy(breakNotificationsEnabled = it)) }
@@ -189,7 +240,7 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Задачи (TODO)")
+                        Text(stringResource(R.string.settings_todos))
                         Switch(
                             checked = settings.todoNotificationsEnabled,
                             onCheckedChange = { viewModel.updateSettings(settings.copy(todoNotificationsEnabled = it)) }
@@ -427,6 +478,48 @@ fun TelegramSetupDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Отмена")
+            }
+        }
+    )
+}
+
+@Composable
+fun LanguageSelectionDialog(
+    currentLanguage: String,
+    onDismiss: () -> Unit,
+    onLanguageSelected: (String) -> Unit
+) {
+    val availableLanguages = LocaleHelper.getAvailableLanguages()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_language)) },
+        text = {
+            Column {
+                availableLanguages.forEach { (code, displayName) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onLanguageSelected(code) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = currentLanguage == code,
+                            onClick = { onLanguageSelected(code) }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = displayName,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.ok))
             }
         }
     )
