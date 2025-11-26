@@ -80,11 +80,6 @@ To create a signed APK or AAB file:
 - Integration with `MainActivity` for app state synchronization
 - Support for Android M+ for checking active notifications
 
-**Recent commits:**
-- `53ca065` - add to notification bar
-- `fd8bebc` - fixes  
-- `5a4db90` - fixes
-
 ### November 26, 2024 - Multi-language Support
 
 **Added support for multiple languages:**
