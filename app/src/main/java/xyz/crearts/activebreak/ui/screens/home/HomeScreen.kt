@@ -19,7 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import xyz.crearts.activebreak.R
-import xyz.crearts.activebreak.ui.components.BackgroundServiceStatusCard
+import xyz.crearts.activebreak.ui.components.PermissionNotificationCard
 import xyz.crearts.activebreak.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,7 +77,7 @@ fun HomeScreen(
             }
 
             item {
-                BackgroundServiceStatusCard(
+                PermissionNotificationCard(
                     viewModel = viewModel,
                     settings = settings
                 )
@@ -87,131 +87,7 @@ fun HomeScreen(
                 StatisticsCard(modifier = Modifier.fillMaxWidth())
             }
 
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    stringResource(R.string.home_break_reminders),
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                )
-                                Text(
-                                    if (settings.isEnabled) stringResource(R.string.home_enabled) else stringResource(R.string.home_disabled),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                )
-                            }
-                            Switch(
-                                checked = settings.isEnabled,
-                                onCheckedChange = { viewModel.toggleEnabled(it) }
-                            )
-                        }
 
-                        if (settings.isEnabled) {
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            HorizontalDivider(
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f)
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Активное время
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Default.Schedule,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    stringResource(R.string.home_active_time),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    "${settings.startHour}:${String.format("%02d", settings.startMinute)} - ${settings.endHour}:${String.format("%02d", settings.endMinute)}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Интервал напоминаний
-                            OutlinedButton(
-                                onClick = { navController.navigate(Screen.Settings.route) },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Timer,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Column {
-                                            Text(
-                                                stringResource(R.string.home_reminder_interval),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
-                                            )
-                                            Text(
-                                                stringResource(R.string.home_every_minutes, settings.intervalMinutes),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                            )
-                                        }
-                                    }
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                            "${settings.intervalMinutes} ${stringResource(R.string.minutes_short)}",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Icon(
-                                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                            contentDescription = stringResource(R.string.home_configure),
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-                            }
-
-                        }
-                    }
-                }
-            }
 
             item {
                 Row(

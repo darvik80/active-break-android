@@ -48,6 +48,9 @@ data class TodoTask(
     @ColumnInfo(name = "last_completed_date")
     val lastCompletedDate: Long? = null,
 
+    @ColumnInfo(name = "completed_at")
+    val completedAt: Long? = null,
+
     @ColumnInfo(name = "next_due_date")
     val nextDueDate: Long? = null
 )

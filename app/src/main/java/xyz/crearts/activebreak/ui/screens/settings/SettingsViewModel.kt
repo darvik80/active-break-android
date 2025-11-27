@@ -86,6 +86,27 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun toggleEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                val currentSettings = settings.value
+                settingsManager.updateSettings(currentSettings.copy(isEnabled = enabled))
+
+                if (enabled) {
+                    BreakReminderWorker.scheduleWork(
+                        getApplication(),
+                        currentSettings.intervalMinutes
+                    )
+                } else {
+                    BreakReminderWorker.cancelWork(getApplication())
+                }
+            } catch (e: Exception) {
+                // Log error but don't crash the app
+                android.util.Log.e("SettingsViewModel", "Error toggling enabled state: ${e.message}", e)
+            }
+        }
+    }
+
     fun updateLanguage(languageCode: String) {
         viewModelScope.launch {
             val currentSettings = settings.value

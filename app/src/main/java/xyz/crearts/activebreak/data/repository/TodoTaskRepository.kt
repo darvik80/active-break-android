@@ -13,7 +13,14 @@ class TodoTaskRepository(private val dao: TodoTaskDao) {
     suspend fun delete(task: TodoTask) = dao.delete(task)
 
     suspend fun toggleTaskCompletion(task: TodoTask) {
-        update(task.copy(isCompleted = !task.isCompleted))
+        val updatedTask = if (task.isCompleted) {
+            // Mark as incomplete, clear completion time
+            task.copy(isCompleted = false, completedAt = null)
+        } else {
+            // Mark as complete, set completion time
+            task.copy(isCompleted = true, completedAt = System.currentTimeMillis())
+        }
+        update(updatedTask)
     }
 
     suspend fun toggleTaskPause(task: TodoTask) {

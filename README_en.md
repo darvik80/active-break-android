@@ -80,7 +80,7 @@ To create a signed APK or AAB file:
 - Integration with `MainActivity` for app state synchronization
 - Support for Android M+ for checking active notifications
 
-### November 26, 2024 - Multi-language Support
+### November 26, 2025 - Multi-language Support
 
 **Added support for multiple languages:**
 
@@ -88,6 +88,32 @@ To create a signed APK or AAB file:
 - ✅ **Complete Localization**: All UI elements are properly localized
 - ✅ **Persistent Settings**: Language preference is saved and applied on app restart
 - ✅ **Easy Extension**: Simple framework for adding more languages in the future
+
+### November 27, 2025 - Code Cleanup and Stability Improvements
+
+**Conducted major code cleanup and optimization:**
+
+- ✅ **Debug Log Cleanup**: Removed all debug logs from production code
+    - Cleaned up `Log.e()`, `Log.d()`, `Log.w()` calls from MainActivity and other components
+    - Kept only critically important logs for error handling
+- ✅ **Database Initialization Fix**: Fixed empty exercise list issue
+    - Added reliable initialization system for 33 basic exercises
+    - Exercises categorized by time of day (morning, afternoon, evening, universal)
+    - Implemented thread-safe initialization using Mutex
+- ✅ **Race Condition Prevention**: Eliminated thread competition issues
+    - Added Double-Check Pattern for safe data initialization
+    - Used `kotlinx.coroutines.sync.Mutex` for synchronization
+    - Prevented data duplication during concurrent requests
+- ✅ **Code Architecture Improvements**: Enhanced database architecture
+    - Refactored `AppDatabase.kt` with code duplication elimination
+    - Single entry point for data initialization via `ensureDefaultActivities()`
+    - Optimized data existence checks
+
+**Technical Details:**
+- Added imports `kotlinx.coroutines.sync.Mutex` and `kotlinx.coroutines.sync.withLock`
+- Implemented `@Volatile private var isDataPopulated` flag for state tracking
+- Created private method `populateDefaultActivities(dao: BreakActivityDao)` for clean logic
+- Removed redundant initialization from database `onCreate()` callback
 
 ## 📝 License
 

@@ -32,6 +32,7 @@ import xyz.crearts.activebreak.ui.theme.ActiveBreakTheme
 import xyz.crearts.activebreak.workers.NotificationHelper
 import xyz.crearts.activebreak.data.preferences.SettingsManager
 import xyz.crearts.activebreak.utils.LocaleHelper
+import xyz.crearts.activebreak.data.local.AppDatabase
 
 class MainActivity : ComponentActivity() {
 
@@ -86,6 +87,9 @@ class MainActivity : ComponentActivity() {
         val filter = IntentFilter("xyz.crearts.activebreak.ACTION_TOGGLE_APP_STATUS")
         registerReceiver(statusToggleReceiver, filter, RECEIVER_NOT_EXPORTED)
 
+        // Ensure default activities are populated
+        ensureDefaultActivities()
+
         // Запускаем WorkManager если напоминания включены
         checkAndStartWorkManager()
 
@@ -111,24 +115,17 @@ class MainActivity : ComponentActivity() {
                     var isInitialized by remember { mutableStateOf(false) }
 
                     LaunchedEffect(Unit) {
-                        Log.e("MainActivity", "LaunchedEffect started - initial setup")
                         try {
                             val settingsManager = SettingsManager.instance
-                            Log.e("MainActivity", "SettingsManager obtained")
                             val settings = settingsManager.getSettings().first()
-                            Log.e("MainActivity", "Settings obtained: isFirstLaunch = ${settings.isFirstLaunch}")
 
                             startDestination = if (settings.isFirstLaunch) {
-                                Log.e("MainActivity", "Setting startDestination to LanguageSelection")
                                 Screen.LanguageSelection.route
                             } else {
-                                Log.e("MainActivity", "Setting startDestination to Home")
                                 Screen.Home.route
                             }
-                            Log.e("MainActivity", "Final startDestination = $startDestination")
                             isInitialized = true
                         } catch (e: Exception) {
-                            Log.e("MainActivity", "Error in LaunchedEffect: ${e.message}", e)
                             startDestination = Screen.Home.route
                             isInitialized = true
                         }
@@ -146,13 +143,11 @@ class MainActivity : ComponentActivity() {
 
                     // Only show NavGraph after initialization
                     if (isInitialized) {
-                        Log.e("MainActivity", "Rendering NavGraph with startDestination: $startDestination")
                         NavGraph(
                             navController = navController,
                             startDestination = startDestination
                         )
                     } else {
-                        Log.e("MainActivity", "Waiting for initialization...")
                         // Show loading indicator while initializing
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -281,5 +276,16 @@ class MainActivity : ComponentActivity() {
         } ?: newBase
 
         super.attachBaseContext(context)
+    }
+
+    private fun ensureDefaultActivities() {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                AppDatabase.ensureDefaultActivities(this@MainActivity)
+            } catch (e: Exception) {
+                // Log error but don't crash the app
+                android.util.Log.e("MainActivity", "Error ensuring default activities: ${e.message}", e)
+            }
+        }
     }
 }

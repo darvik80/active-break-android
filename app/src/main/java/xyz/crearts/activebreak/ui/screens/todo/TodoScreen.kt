@@ -275,6 +275,10 @@ fun TodoScreen(
                 }
             }
         } else {
+            // Group tasks by completion status
+            val activeTasks = tasks.filter { !it.isCompleted }
+            val completedTasks = tasks.filter { it.isCompleted }
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -282,14 +286,53 @@ fun TodoScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(tasks) { task ->
-                    CompactTodoTaskCard(
-                        task = task,
-                        onToggle = { viewModel.toggleTaskCompletion(task) },
-                        onDelete = { viewModel.deleteTask(task) },
-                        onEdit = { editingTask = task },
-                        onPause = { viewModel.toggleTaskPause(task) }
-                    )
+                // Active tasks section
+                if (activeTasks.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Активные задачи",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+
+                    items(activeTasks) { task ->
+                        CompactTodoTaskCard(
+                            task = task,
+                            onToggle = { viewModel.toggleTaskCompletion(task) },
+                            onDelete = { viewModel.deleteTask(task) },
+                            onEdit = { editingTask = task },
+                            onPause = { viewModel.toggleTaskPause(task) }
+                        )
+                    }
+                }
+
+                // Completed tasks section
+                if (completedTasks.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Выполненные задачи",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            modifier = Modifier.padding(
+                                top = if (activeTasks.isNotEmpty()) 16.dp else 8.dp,
+                                bottom = 8.dp
+                            )
+                        )
+                    }
+
+                    items(completedTasks) { task ->
+                        CompactTodoTaskCard(
+                            task = task,
+                            onToggle = { viewModel.toggleTaskCompletion(task) },
+                            onDelete = { viewModel.deleteTask(task) },
+                            onEdit = { editingTask = task },
+                            onPause = { viewModel.toggleTaskPause(task) }
+                        )
+                    }
                 }
             }
         }
@@ -403,14 +446,34 @@ fun CompactTodoTaskCard(
                                 else MaterialTheme.colorScheme.onSurface
                     )
                     
-                    // Краткая информация о времени/дате, если есть
-                    task.dueDate?.let { date ->
-                        val dateFormat = SimpleDateFormat("dd.MM HH:mm", Locale.getDefault())
-                         Text(
-                            dateFormat.format(Date(date)),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
+                    // Display time information based on task status and type
+                    val dateFormat = SimpleDateFormat("dd.MM HH:mm", Locale.getDefault())
+
+                    when {
+                        // For completed tasks - show completion time
+                        task.isCompleted && task.completedAt != null -> {
+                            Text(
+                                "Выполнено: ${dateFormat.format(Date(task.completedAt))}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                        // For recurring tasks - show last completion time if available
+                        task.recurrenceType != "NONE" && task.lastCompletedDate != null -> {
+                            Text(
+                                "Последний раз: ${dateFormat.format(Date(task.lastCompletedDate))}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                        // For scheduled tasks - show due date
+                        task.dueDate != null -> {
+                            Text(
+                                dateFormat.format(Date(task.dueDate)),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
                     }
                 }
 

@@ -31,7 +31,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         saveActivityStatistics(context, activityTitle, isTodo)
-                        Log.d("NotificationActionReceiver", "Activity completed: $activityTitle")
                     } catch (e: Exception) {
                         Log.e("NotificationActionReceiver", "Error saving statistics: ${e.message}", e)
                     } finally {
@@ -51,7 +50,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
                             .build()
 
                         WorkManager.getInstance(context).enqueue(workRequest)
-                        Log.d("NotificationActionReceiver", "Break reminder postponed for 10 minutes")
                     } else {
                         // For TODO tasks, reschedule using TodoReminderWorker
                         CoroutineScope(Dispatchers.IO).launch {
@@ -68,9 +66,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
                                             nextDueDate = System.currentTimeMillis() + (10 * 60 * 1000) // 10 minutes
                                         )
                                     )
-                                    Log.d("NotificationActionReceiver", "TODO reminder postponed for 10 minutes: $activityTitle")
-                                } else {
-                                    Log.w("NotificationActionReceiver", "Could not find matching TODO task: $activityTitle")
                                 }
                             } catch (e: Exception) {
                                 Log.e("NotificationActionReceiver", "Error postponing TODO reminder: ${e.message}", e)
@@ -87,8 +82,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
             NotificationHelper.ACTION_TOGGLE_STATUS -> {
                 // Handle status bar notification toggle action
                 try {
-                    Log.d("NotificationActionReceiver", "Status toggle action received")
-
                     // Broadcast intent to MainActivity to handle status toggle
                     val toggleIntent = Intent("xyz.crearts.activebreak.ACTION_TOGGLE_APP_STATUS")
                     context.sendBroadcast(toggleIntent)
@@ -129,9 +122,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
                     if (matchingTask != null && matchingTask.title == activityTitle) {
                         val repository = xyz.crearts.activebreak.data.repository.TodoTaskRepository(todoDao)
                         repository.toggleTaskCompletion(matchingTask)
-                        Log.d("NotificationActionReceiver", "TODO task marked as completed: $activityTitle")
-                    } else {
-                        Log.w("NotificationActionReceiver", "Could not find matching TODO task: $activityTitle")
                     }
                 } catch (e: Exception) {
                     Log.e("NotificationActionReceiver", "Error updating TODO task: ${e.message}", e)

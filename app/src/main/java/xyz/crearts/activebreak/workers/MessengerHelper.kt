@@ -45,7 +45,7 @@ object MessengerHelper {
             }
 
             val responseCode = connection.responseCode
-            Log.d("MessengerHelper", "Telegram response code: $responseCode")
+
 
             if (responseCode != 200) {
                 val errorStream = connection.errorStream?.bufferedReader()?.use { it.readText() }

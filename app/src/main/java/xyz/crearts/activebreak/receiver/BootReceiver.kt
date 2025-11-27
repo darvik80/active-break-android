@@ -14,7 +14,7 @@ import xyz.crearts.activebreak.workers.BreakReminderWorker
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            Log.d("BootReceiver", "Device booted, starting WorkManager")
+
 
             // Use goAsync() to handle coroutines safely in BroadcastReceiver
             val pendingResult = goAsync()
@@ -29,7 +29,7 @@ class BootReceiver : BroadcastReceiver() {
                             context,
                             settings.intervalMinutes
                         )
-                        Log.d("BootReceiver", "WorkManager started with interval: ${settings.intervalMinutes}")
+
                     }
                 } catch (e: Exception) {
                     Log.e("BootReceiver", "Error starting WorkManager: ${e.message}", e)

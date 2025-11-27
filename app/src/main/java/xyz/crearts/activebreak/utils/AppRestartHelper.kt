@@ -17,7 +17,7 @@ object AppRestartHelper {
      */
     fun restartApp(context: Context) {
         try {
-            Log.d("AppRestartHelper", "Attempting to restart app")
+
 
             // Create restart intent
             val intent = Intent(context, MainActivity::class.java).apply {
@@ -51,7 +51,7 @@ object AppRestartHelper {
                 try {
                     context.recreate()
                 } catch (recreateException: Exception) {
-                    Log.e("AppRestartHelper", "Failed to recreate activity: ${recreateException.message}")
+
                 }
             }
         }

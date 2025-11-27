@@ -9,10 +9,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import xyz.crearts.activebreak.data.local.AppDatabase
+import xyz.crearts.activebreak.data.local.dao.ActivityTypeCount
+import xyz.crearts.activebreak.data.local.dao.DayActivityCount
 import xyz.crearts.activebreak.data.preferences.Settings
 import xyz.crearts.activebreak.data.preferences.SettingsManager
 import xyz.crearts.activebreak.data.repository.BreakActivityRepository
+import xyz.crearts.activebreak.ui.components.charts.ChartData
+import xyz.crearts.activebreak.ui.components.charts.PieChartData
 import xyz.crearts.activebreak.workers.BreakReminderWorker
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
     // Use dependency injection pattern instead of direct database creation
@@ -51,26 +57,53 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             initialValue = 0
         )
 
-    fun toggleEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                val currentSettings = settings.value
-                settingsManager.updateSettings(currentSettings.copy(isEnabled = enabled))
+    // Chart data methods
+    suspend fun getWeeklyChartData(): List<ChartData> {
+        return try {
+            val weekAgo = System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000)
+            val rawData = statisticsDao.getWeeklyActivityData(weekAgo)
 
-                if (enabled) {
-                    BreakReminderWorker.scheduleWork(
-                        getApplication(),
-                        currentSettings.intervalMinutes
-                    )
-                } else {
-                    BreakReminderWorker.cancelWork(getApplication())
-                }
-            } catch (e: Exception) {
-                // Log error but don't crash the app
-                android.util.Log.e("HomeViewModel", "Error toggling enabled state: ${e.message}", e)
+            // Ensure all days are present with 0 count if no data
+            val allDays = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
+            allDays.map { day ->
+                val count = rawData.find { it.day_name == day }?.count ?: 0
+                ChartData(label = day, value = count.toFloat())
             }
+        } catch (e: Exception) {
+            android.util.Log.e("HomeViewModel", "Error getting weekly chart data: ${e.message}", e)
+            emptyList()
         }
     }
+
+    suspend fun getActivityTypePieData(): List<PieChartData> {
+        return try {
+            val weekAgo = System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000)
+            val rawData = statisticsDao.getActivityTypeData(weekAgo)
+
+            rawData.map { data ->
+                val label = when (data.activity_type) {
+                    "BREAK" -> "Перерывы"
+                    "TODO" -> "Задачи"
+                    else -> data.activity_type
+                }
+                val color = when (data.activity_type) {
+                    "BREAK" -> Color(0xFF4CAF50) // Green
+                    "TODO" -> Color(0xFF2196F3)  // Blue
+                    else -> Color(0xFF9E9E9E)    // Gray
+                }
+                PieChartData(
+                    label = label,
+                    value = data.count.toFloat(),
+                    color = color
+                )
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("HomeViewModel", "Error getting activity type pie data: ${e.message}", e)
+            emptyList()
+        }
+    }
+
+
 
     fun updateInterval(intervalMinutes: Long) {
         viewModelScope.launch {

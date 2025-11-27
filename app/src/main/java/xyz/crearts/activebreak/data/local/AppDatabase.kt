@@ -8,6 +8,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import xyz.crearts.activebreak.data.local.dao.ActivityStatisticsDao
 import xyz.crearts.activebreak.data.local.dao.BreakActivityDao
 import xyz.crearts.activebreak.data.local.dao.TodoTaskDao
@@ -17,7 +19,7 @@ import xyz.crearts.activebreak.data.local.entity.TodoTask
 
 @Database(
     entities = [BreakActivity::class, TodoTask::class, ActivityStatistics::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -28,6 +30,11 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
+
+        @Volatile
+        private var isDataPopulated = false
+
+        private val populationMutex = Mutex()
 
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -40,10 +47,7 @@ abstract class AppDatabase : RoomDatabase() {
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
-                            // Заполнение базы начальными данными
-                            CoroutineScope(Dispatchers.IO).launch {
-                                populateDatabase(context)
-                            }
+                            // Database will be populated when first accessed via ensureDefaultActivities()
                         }
                     })
                     .build()
@@ -52,15 +56,32 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        private suspend fun populateDatabase(context: Context) {
+        suspend fun ensureDefaultActivities(context: Context) {
+            // Early return if already populated
+            if (isDataPopulated) return
+
             val database = getDatabase(context)
             val dao = database.breakActivityDao()
 
-            // Проверяем, есть ли уже данные
-            val existingActivities = dao.getActivitiesByTimeOfDay("ANY")
-            if (existingActivities.isNotEmpty()) {
-                return // Данные уже есть
+            // Use Mutex for thread-safe access with suspend functions
+            populationMutex.withLock {
+                // Double-check pattern
+                if (isDataPopulated) return
+
+                // Check if we have any activities at all
+                val activityCount = dao.getCount()
+                if (activityCount > 0) {
+                    isDataPopulated = true
+                    return // Data already exists
+                }
+
+                // Populate with default activities
+                populateDefaultActivities(dao)
+                isDataPopulated = true
             }
+        }
+
+        private suspend fun populateDefaultActivities(dao: BreakActivityDao) {
 
             val defaultActivities = listOf(
                 // === УТРО 6-9: Энергичные активности ===
@@ -275,6 +296,8 @@ abstract class AppDatabase : RoomDatabase() {
                     weight = 3
                 )
             )
+
+            // Insert all default activities
             defaultActivities.forEach { dao.insert(it) }
         }
     }
