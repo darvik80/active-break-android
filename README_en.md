@@ -63,32 +63,6 @@ To create a signed APK or AAB file:
 
 ## 🆕 Latest Updates
 
-### November 25, 2025 - Persistent Notification Feature
-
-**Added persistent notification in notification panel (Notification Shade):**
-
-- ✅ **Persistent Status Notification**: Permanent notification with current app status
-- ✅ **Quick Controls**: Quick control buttons (pause/resume) directly from notification panel
-- ✅ **Smart Status Display**: Dynamic status display ("Active" / "Paused")
-- ✅ **WorkManager Integration**: Automatic background task management when switching status
-- ✅ **Improved UX**: Simplified notification texts without excessive app name repetition
-- ✅ **BroadcastReceiver**: Full integration with Android notification system
-
-**Technical Improvements:**
-- Added separate notification channel for status (`STATUS_CHANNEL_ID`)
-- Implemented `BroadcastReceiver` for handling notification actions
-- Integration with `MainActivity` for app state synchronization
-- Support for Android M+ for checking active notifications
-
-### November 26, 2025 - Multi-language Support
-
-**Added support for multiple languages:**
-
-- ✅ **Language Selection**: Choose between Russian, English, or system language in settings
-- ✅ **Complete Localization**: All UI elements are properly localized
-- ✅ **Persistent Settings**: Language preference is saved and applied on app restart
-- ✅ **Easy Extension**: Simple framework for adding more languages in the future
-
 ### November 27, 2025 - Code Cleanup and Stability Improvements
 
 **Conducted major code cleanup and optimization:**
@@ -132,6 +106,32 @@ To create a signed APK or AAB file:
 - Implemented `@Volatile private var isDataPopulated` flag for state tracking
 - Created private method `populateDefaultActivities(dao: BreakActivityDao)` for clean logic
 - Removed redundant initialization from database `onCreate()` callback
+
+### November 26, 2025 - Multi-language Support
+
+**Added support for multiple languages:**
+
+- ✅ **Language Selection**: Choose between Russian, English, or system language in settings
+- ✅ **Complete Localization**: All UI elements are properly localized
+- ✅ **Persistent Settings**: Language preference is saved and applied on app restart
+- ✅ **Easy Extension**: Simple framework for adding more languages in the future
+
+### November 25, 2025 - Persistent Notification Feature
+
+**Added persistent notification in notification panel (Notification Shade):**
+
+- ✅ **Persistent Status Notification**: Permanent notification with current app status
+- ✅ **Quick Controls**: Quick control buttons (pause/resume) directly from notification panel
+- ✅ **Smart Status Display**: Dynamic status display ("Active" / "Paused")
+- ✅ **WorkManager Integration**: Automatic background task management when switching status
+- ✅ **Improved UX**: Simplified notification texts without excessive app name repetition
+- ✅ **BroadcastReceiver**: Full integration with Android notification system
+
+**Technical Improvements:**
+- Added separate notification channel for status (`STATUS_CHANNEL_ID`)
+- Implemented `BroadcastReceiver` for handling notification actions
+- Integration with `MainActivity` for app state synchronization
+- Support for Android M+ for checking active notifications
 
 ## 📝 License
 
